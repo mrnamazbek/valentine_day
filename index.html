@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentine's Interactive Card | Liquid Glass</title>
+    <style>
+        /* Modern Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+
+        :root {
+            --bg-deep: #070A0E;
+            --accent-cyan: #00F2FF;
+            --accent-green: #00FF85;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-glow: 0 0 20px rgba(0, 242, 255, 0.3);
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-deep);
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- BACKGROUND & PARTICLES --- */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #0F1624 0%, #070A0E 100%);
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            filter: blur(80px);
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: moveBlobs 25s infinite alternate;
+        }
+
+        .blob-2 {
+            right: -100px;
+            top: -100px;
+            background: var(--accent-cyan);
+            animation-delay: -5s;
+        }
+
+        .blob-3 {
+            left: -200px;
+            bottom: -200px;
+            background: var(--accent-green);
+            animation-delay: -10s;
+        }
+
+        @keyframes moveBlobs {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(50px, 100px) scale(1.1);
+            }
+
+            100% {
+                transform: translate(-50px, -50px) scale(1);
+            }
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.5;
+            animation: floatUp 10s linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(110vh) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.5;
+            }
+
+            90% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateY(-10vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* --- CONTAINER --- */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 40px 20px;
+            z-index: 10;
+        }
+
+        /* --- INTRO SCREEN --- */
+        #intro-screen {
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .main-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 10vw, 6rem);
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #fff, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+            animation: fadeInUp 1s forwards 0.5s;
+        }
+
+        .open-btn {
+            padding: 20px 50px;
+            font-size: 1.2rem;
+            color: #fff;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            box-shadow: var(--neon-glow);
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0;
+            animation: fadeInUp 1s forwards 0.8s;
+        }
+
+        .open-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.6);
+            border-color: var(--accent-cyan);
+        }
+
+        /* --- MAIN CONTENT --- */
+        #main-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: var(--transition);
+        }
+
+        #main-content.visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            transition: var(--transition);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-cyan);
+            box-shadow: var(--neon-glow);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+        }
+
+        .card-text {
+            font-size: 1.2rem;
+            line-height: 1.4;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* --- PROPOSAL SECTION --- */
+        .proposal-section {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 60px 20px;
+            backdrop-filter: blur(30px);
+            position: relative;
+            overflow: hidden;
+            margin-top: 40px;
+        }
+
+        .proposal-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            background: linear-gradient(45deg, var(--accent-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            min-height: 80px;
+        }
+
+        .btn-yes {
+            padding: 18px 60px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            border: none;
+            border-radius: 50px;
+            color: #070A0E;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(0, 255, 133, 0.4);
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px rgba(0, 242, 255, 0.8);
+        }
+
+        .btn-no {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Heart Pulse */
+        .heart-pulse {
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Success Message */
+        #success-msg {
+            display: none;
+            margin-top: 30px;
+            font-size: 1.5rem;
+            color: var(--accent-green);
+            animation: fadeInUp 0.5s forwards;
+        }
+
+        /* --- MOBILE ADAPTIVE --- */
+        @media (max-width: 600px) {
+            .main-title {
+                font-size: 2.5rem;
+            }
+
+            .proposal-title {
+                font-size: 1.8rem;
+            }
+
+            .btn-yes {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="background" id="bg">
+        <div class="blob"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="container">
+        <!-- Intro Section -->
+        <section id="intro-screen">
+            <h1 class="main-title">Modern Love <span class="heart-pulse">💙</span></h1>
+            <p style="margin-bottom: 30px; color: rgba(255,255,255,0.6); letter-spacing: 1px;">Crafting moments in glass
+                and light</p>
+            <button class="open-btn" onclick="showMain()">Open my heart</button>
+        </section>
+
+        <!-- Main Content Section -->
+        <section id="main-content">
+            <div class="grid">
+                <!-- Card 1 -->
+                <div class="card">
+                    <div class="card-icon">💌</div>
+                    <div class="card-text">Будешь моей Валентинкой? 💙</div>
+                </div>
+                <!-- Card 2 -->
+                <div class="card">
+                    <div class="card-icon">💫</div>
+                    <div class="card-text">Разрешишь украсть твоё сердце? 💫</div>
+                </div>
+                <!-- Card 3 -->
+                <div class="card">
+                    <div class="card-icon">🤍</div>
+                    <div class="card-text">Готова ли ты на бесконечные объятия? 🤍</div>
+                </div>
+                <!-- Card 4 -->
+                <div class="card">
+                    <div class="card-icon">✨</div>
+                    <div class="card-text">Нажмешь “Да” и сделаешь мой день идеальным? ✨</div>
+                </div>
+                <!-- Card 5 -->
+                <div class="card">
+                    <div class="card-icon">🔗</div>
+                    <div class="card-text">Совпадение или судьба? 💌</div>
+                </div>
+            </div>
+
+            <!-- Proposal Area -->
+            <div class="proposal-section">
+                <h2 class="proposal-title">The Big Question 💎</h2>
+                <div class="btn-group">
+                    <button id="yesBtn" class="btn-yes" onclick="celebrate()">YES!</button>
+                    <button id="noBtn" class="btn-no" onmouseover="moveNo()" onclick="moveNo()">NO</button>
+                </div>
+                <div id="success-msg">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
+                    You made me the happiest! <br>
+                    <small style="color: rgba(255,255,255,0.5); font-size: 1rem;">Looking forward to our perfect day
+                        together</small>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // --- Background Hearts ---
+        function createParticle() {
+            const bg = document.getElementById('bg');
+            const p = document.createElement('div');
+            const size = Math.random() * 20 + 10;
+            const emojis = ['💙', '💚', '✨', '🥰', '☁️'];
+
+            p.className = 'particle';
+            p.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.fontSize = size + 'px';
+            p.style.animationDuration = (Math.random() * 5 + 5) + 's';
+
+            bg.appendChild(p);
+            setTimeout(() => p.remove(), 10000);
+        }
+        setInterval(createParticle, 500);
+
+        // --- Navigation ---
+        function showMain() {
+            document.getElementById('intro-screen').style.display = 'none';
+            const main = document.getElementById('main-content');
+            main.style.display = 'block';
+            setTimeout(() => main.classList.add('visible'), 50);
+        }
+
+        // --- No Button Logic ---
+        const noMessages = [
+            "Ты уверена? 😢",
+            "Подумай ещё 😄",
+            "Ошибка! Неверный выбор 💫",
+            "Ой, промахнулась? 😉",
+            "Не-а, не нажмешь!"
+        ];
+        let noStep = 0;
+
+        function moveNo() {
+            const btn = document.getElementById('noBtn');
+            const x = Math.random() * (window.innerWidth - btn.offsetWidth - 100) + 50;
+            const y = Math.random() * (window.innerHeight - btn.offsetHeight - 100) + 50;
+
+            btn.style.position = 'fixed';
+            btn.style.left = x + 'px';
+            btn.style.top = y + 'px';
+
+            // Randomly rotate
+            btn.style.transform = `rotate(${Math.random() * 20 - 10}deg) scale(${Math.max(0.5, 1 - (noStep * 0.1))})`;
+
+            // Change Text
+            btn.innerText = noMessages[noStep % noMessages.length];
+            noStep++;
+
+            // Emoji burst around cursor
+            spawnEmojiAt(btn.offsetLeft + btn.offsetWidth / 2, btn.offsetTop + btn.offsetHeight / 2, '❌');
+        }
+
+        // --- Yes Button Logic ---
+        function celebrate() {
+            const yesBtn = document.getElementById('yesBtn');
+            const noBtn = document.getElementById('noBtn');
+            const success = document.getElementById('success-msg');
+
+            yesBtn.innerText = "You made me the happiest!";
+            yesBtn.style.pointerEvents = 'none';
+            noBtn.style.display = 'none';
+            success.style.display = 'block';
+
+            // Continuous emoji burst
+            for (let i = 0; i < 50; i++) {
+                setTimeout(burstEmoji, i * 50);
+            }
+        }
+
+        function burstEmoji() {
+            const x = window.innerWidth / 2;
+            const y = window.innerHeight / 2;
+            const emojiList = ['💙', '💚', '✨', '🥰', '🫶', '💎', '🎉'];
+            spawnEmojiAt(x, y, emojiList[Math.floor(Math.random() * emojiList.length)]);
+        }
+
+        function spawnEmojiAt(x, y, char) {
+            const p = document.createElement('div');
+            p.innerText = char;
+            p.style.position = 'fixed';
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.style.pointerEvents = 'none';
+            p.style.zIndex = '1000';
+            p.style.fontSize = '2rem';
+            p.style.transition = 'all 1s ease-out';
+
+            document.body.appendChild(p);
+
+            const tx = (Math.random() - 0.5) * 500;
+            const ty = (Math.random() - 0.5) * 500;
+
+            requestAnimationFrame(() => {
+                p.style.transform = `translate(${tx}px, ${ty}px) scale(0) rotate(${Math.random() * 360}deg)`;
+                p.style.opacity = '0';
+            });
+
+            setTimeout(() => p.remove(), 1000);
+        }
+    </script>
+</body>
+
+</html>
