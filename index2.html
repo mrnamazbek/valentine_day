@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Будешь моим Валентином? 💙💚 | Liquid Glass Edition</title>
+    <!--
+  CUSTOMIZATION:
+  1. GIF URLs  → Change YES_GIF_URL / NO_GIF_URL constants in <script>.
+  2. Palette   → Edit CSS variables in :root.
+  3. Content   → Edit the REASONS array and card texts in HTML.
+  4. Particles → Tweak PARTICLE_COUNT / CONFETTI_COUNT in <script>.
+-->
+    <style>
+        /* ====================== CSS VARIABLES ====================== */
+        :root {
+            --bg1: #031026;
+            --bg2: #04323a;
+            --accent-cyan: #2bb7ff;
+            --accent-emerald: #00e6a0;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-blur: 18px;
+            --text: #e8f4ff;
+            --text-dim: rgba(232, 244, 255, 0.65);
+            --radius: 24px;
+            --transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* ====================== RESET ====================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(ellipse 1400px 700px at 8% 15%, rgba(11, 60, 95, 0.4), transparent),
+                linear-gradient(175deg, var(--bg1) 0%, var(--bg2) 55%, #021a1e 100%);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* ====================== BACKGROUND LAYERS ====================== */
+        /* Slow-moving gradient overlay */
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background: linear-gradient(120deg, rgba(43, 183, 255, 0.06), rgba(0, 230, 160, 0.04));
+            mix-blend-mode: overlay;
+            animation: shiftBg 20s linear infinite;
+        }
+
+        @keyframes shiftBg {
+            0% {
+                transform: translateX(-8%)
+            }
+
+            50% {
+                transform: translateX(8%)
+            }
+
+            100% {
+                transform: translateX(-8%)
+            }
+        }
+
+        /* Canvas for heart particles */
+        canvas#heartCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ====================== LAYOUT ====================== */
+        .page-wrap {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 30px 16px;
+        }
+
+        /* ====================== GLASS CARD ====================== */
+        .glass-card {
+            position: relative;
+            width: min(960px, 96vw);
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+            padding: 36px;
+            border-radius: var(--radius);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(var(--glass-blur));
+            box-shadow: 0 12px 40px rgba(2, 8, 30, 0.55), 0 0 60px rgba(0, 230, 160, 0.04);
+            animation: cardEntry 0.8s ease-out both 0.3s;
+        }
+
+        @keyframes cardEntry {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* Rotating neon border glow */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: var(--radius);
+            background: conic-gradient(from 0deg, transparent 60%, var(--accent-cyan), transparent 80%);
+            z-index: -1;
+            animation: rotateGlow 8s linear infinite;
+            opacity: 0.15;
+        }
+
+        @keyframes rotateGlow {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* ====================== LEFT COLUMN ====================== */
+        .left h1 {
+            font-size: clamp(22px, 3.8vw, 38px);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .lead {
+            color: var(--text-dim);
+            font-size: clamp(14px, 1.6vw, 17px);
+            line-height: 1.55;
+            margin-bottom: 28px;
+        }
+
+        /* ====================== BUTTONS ====================== */
+        .actions {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            position: relative;
+            min-height: 60px;
+        }
+
+        .btn {
+            font-family: inherit;
+            font-weight: 700;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .btn:focus-visible {
+            outline: 3px solid rgba(43, 183, 255, 0.5);
+            outline-offset: 2px;
+        }
+
+        .btn-yes {
+            padding: 15px 32px;
+            font-size: 15px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-emerald));
+            color: #002129;
+            box-shadow: 0 8px 24px rgba(0, 230, 160, 0.18);
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.04) translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0, 230, 160, 0.28);
+        }
+
+        .btn-yes:active {
+            transform: scale(0.98)
+        }
+
+        .btn-no {
+            padding: 13px 24px;
+            font-size: 14px;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* ====================== MINI CARDS / ASIDE ====================== */
+        .right {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .mini {
+            padding: 16px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008));
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-dim);
+        }
+
+        .mini strong {
+            color: var(--accent-emerald);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* ====================== HINT CARDS (below buttons) ====================== */
+        .hint-cards {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .hint-card {
+            flex: 1 1 140px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 13px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .hint-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(0, 230, 160, 0.15);
+            transform: translateY(-3px);
+        }
+
+        /* ====================== MODALS ====================== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            visibility: visible;
+            opacity: 1
+        }
+
+        .modal-dialog {
+            width: min(520px, 92vw);
+            max-height: 88vh;
+            overflow-y: auto;
+            background: linear-gradient(180deg, rgba(10, 20, 40, 0.95), rgba(4, 50, 58, 0.92));
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 28px;
+            transform: scale(0.92);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .modal-overlay.open .modal-dialog {
+            transform: scale(1);
+            opacity: 1
+        }
+
+        .modal-gif {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 14px;
+            display: block;
+            margin: 18px auto;
+        }
+
+        /* ====================== REASONS CAROUSEL ====================== */
+        .reasons-wrap {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .reasons-wrap::-webkit-scrollbar {
+            height: 5px
+        }
+
+        .reasons-wrap::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px
+        }
+
+        .reason-item {
+            flex: 0 0 240px;
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--accent-emerald);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        /* ====================== TOAST ====================== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--accent-emerald);
+            color: #002129;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1
+        }
+
+        /* ====================== SHARE BUTTON ====================== */
+        .share-btn {
+            margin-top: 14px;
+            background: none;
+            border: none;
+            color: var(--accent-cyan);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 0.7;
+            transition: 0.3s;
+        }
+
+        .share-btn:hover {
+            opacity: 1;
+            text-decoration: underline
+        }
+
+        /* ====================== RESPONSIVE ====================== */
+        @media (max-width: 880px) {
+            .glass-card {
+                grid-template-columns: 1fr;
+                padding: 24px
+            }
+
+            .right {
+                order: 2
+            }
+        }
+
+        @media (max-width: 500px) {
+            .actions {
+                flex-direction: column;
+                align-items: stretch
+            }
+
+            .btn-yes,
+            .btn-no {
+                width: 100%;
+                text-align: center
+            }
+        }
+
+        /* ====================== REDUCED MOTION ====================== */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background layers -->
+    <div class="bg-overlay" aria-hidden="true"></div>
+    <canvas id="heartCanvas" aria-hidden="true"></canvas>
+
+    <!-- A11y live region for screen readers -->
+    <div id="liveRegion" aria-live="polite"
+        style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)"></div>
+
+    <div class="page-wrap">
+        <div class="glass-card" id="mainCard" role="main" aria-labelledby="mainQuestion">
+
+            <!-- LEFT: Main Content -->
+            <div class="left">
+                <h1 id="mainQuestion">Будешь ли ты моим валентином? 💙💚💫✨🫶</h1>
+                <p class="lead">
+                    Скажи «Да» — и сердца полетят, конфетти взорвется, а мир станет немного волшебнее. <br>
+                    Или попробуй нажать «Нет»... если сможешь поймать кнопку 😉
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="actions" id="actionsArea">
+                    <button class="btn btn-yes" id="yesBtn" aria-haspopup="dialog">Да — конечно! 💖</button>
+                    <button class="btn btn-no" id="noBtn" aria-haspopup="dialog">Нет... 😬</button>
+                </div>
+
+                <!-- Cute Hint Cards -->
+                <div class="hint-cards">
+                    <div class="hint-card">Будешь моей Валентинкой? 💙</div>
+                    <div class="hint-card">Разрешишь украсть сердце? 💫</div>
+                    <div class="hint-card">Бесконечные объятия? 🤍</div>
+                    <div class="hint-card">Совпадение или судьба? 💌</div>
+                    <div class="hint-card">Нажмешь «Да»? ✨</div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Decorative Aside -->
+            <aside class="right">
+                <div class="mini">
+                    <strong>💎 Design Notes</strong>
+                    Glassmorphism + Deep Blue / Emerald. <br>
+                    Canvas heart particles + Confetti burst.
+                </div>
+                <div class="mini">
+                    <strong>✨ Fun Fact</strong>
+                    Кнопка «Нет» живёт своей жизнью — она убегает, вращается и даже меняет текст.
+                </div>
+                <div class="mini" id="statusCard" aria-live="polite" style="min-height:40px">
+                    <strong>📡 Status</strong>
+                    Ожидание ответа...
+                </div>
+            </aside>
+
+        </div>
+    </div>
+
+    <!-- YES Modal -->
+    <div class="modal-overlay" id="yesModal" role="dialog" aria-modal="true" aria-labelledby="yesTitleText">
+        <div class="modal-dialog" id="yesDialog" tabindex="-1">
+            <h2 id="yesTitleText" style="color:var(--accent-emerald)">Ура! 🎉 Ты сделала меня счастливым!</h2>
+            <p style="color:var(--text-dim);margin:8px 0 0 0">Смотри, что я подготовил:</p>
+            <img class="modal-gif" id="yesGifImg" src="" alt="Romantic celebration GIF" loading="lazy">
+            <!-- 10 Reasons Carousel -->
+            <h3 style="margin-top:18px;color:var(--accent-emerald);font-size:15px">10 причин, почему я тебя люблю:</h3>
+            <div class="reasons-wrap" id="reasonsList"></div>
+            <button class="share-btn" id="shareBtnModal" type="button">🔗 Копировать ссылку</button>
+            <div style="margin-top:14px;text-align:right">
+                <button class="btn btn-no" id="closeYesModal" type="button">Закрыть 💙</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NO Modal -->
+    <div class="modal-overlay" id="noModal" role="dialog" aria-modal="true" aria-labelledby="noTitleText">
+        <div class="modal-dialog" id="noDialog" tabindex="-1">
+            <h2 id="noTitleText" style="color:#ff6b6b">Ошибка 404: Отказ не найден! 😅</h2>
+            <p style="color:var(--text-dim);margin:8px 0 0 0">Ну-ну, даже кнопка не хотела... Вот тебе мем!</p>
+            <img class="modal-gif" id="noGifImg" src="" alt="Funny judging GIF" loading="lazy">
+            <div style="margin-top:14px;text-align:right">
+                <button class="btn btn-no" id="closeNoModal" type="button">Попробовать снова 😉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">Ссылка скопирована! 🔗</div>
+
+    <script>
+        /* ================================================================
+           CONFIGURATION — change these to customize
+           ================================================================ */
+        const YES_GIF_URL = 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif';
+        const NO_GIF_URL = 'https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif';
+
+        const PARTICLE_COUNT = 30;   // background floating hearts
+        const CONFETTI_COUNT = 90;   // burst particles on YES click
+        const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const REASONS = [
+            'Твоя улыбка освещает мой день ☀️',
+            'У тебя самое доброе сердце 🤍',
+            'Ты понимаешь меня без слов 🧩',
+            'С тобой никогда не бывает скучно 🎢',
+            'Твоя поддержка даёт мне силы 🛡️',
+            'Ты делаешь меня лучше каждый день 🌱',
+            'Наши разговоры по душам — бесценны 🌌',
+            'Твоё чувство юмора — лучшее 😂',
+            'Твои глаза — целый океан 🌊',
+            'Ты — это просто ТЫ ♾️'
+        ];
+
+        const NO_TEXTS = [
+            'Ты уверена? 😢',
+            'Подумай ещё 😄',
+            'Ошибка! Неверный выбор 💫',
+            'Ой, промахнулась? 😉',
+            'Тут нет опции «Нет» 🚫',
+            'Серьёзно?! 🥺',
+            'Попробуй ещё раз 🔄'
+        ];
+
+        /* ================================================================
+           1. CANVAS — Floating Heart-Shaped Particles
+           ================================================================ */
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+        let W, H;
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        /* Heart shape drawing helper */
+        function drawHeart(x, y, size, angle, color, alpha) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.scale(size / 40, size / 40);
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(0, -12, -20, -12, -20, 5);
+            ctx.bezierCurveTo(-20, 25, 0, 35, 0, 50);
+            ctx.bezierCurveTo(0, 35, 20, 25, 20, 5);
+            ctx.bezierCurveTo(20, -12, 0, -12, 0, 0);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        /* Particle class for both background and burst */
+        class HeartParticle {
+            constructor(burst, ox, oy) {
+                this.burst = !!burst;
+                this.init(ox, oy);
+            }
+            init(ox, oy) {
+                if (this.burst) {
+                    this.x = ox;
+                    this.y = oy;
+                    this.vx = (Math.random() - 0.5) * 10;
+                    this.vy = (Math.random() - 0.8) * 8;
+                    this.life = 70 + Math.random() * 40;
+                    this.maxLife = this.life;
+                } else {
+                    this.x = Math.random() * W;
+                    this.y = Math.random() * H;
+                    this.vx = (Math.random() - 0.5) * 0.35;
+                    this.vy = -0.2 - Math.random() * 0.5;
+                    this.life = Infinity;
+                }
+                this.size = 6 + Math.random() * 20;
+                this.angle = Math.random() * Math.PI * 2;
+                this.spin = (Math.random() - 0.5) * 0.025;
+                this.baseAlpha = 0.15 + Math.random() * 0.45;
+                this.color = Math.random() > 0.5 ? 'rgba(43,183,255,1)' : 'rgba(0,230,160,1)';
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+                if (this.burst) {
+                    this.vy += 0.12; // gravity
+                    this.life--;
+                } else {
+                    if (this.y < -60) { this.y = H + 60; this.x = Math.random() * W; }
+                    if (this.x < -60 || this.x > W + 60) { this.y = H + 60; this.x = Math.random() * W; }
+                }
+            }
+            draw() {
+                let alpha = this.baseAlpha;
+                if (this.burst) alpha = this.baseAlpha * (this.life / this.maxLife);
+                if (alpha <= 0) return;
+                drawHeart(this.x, this.y, this.size, this.angle, this.color, alpha);
+            }
+            isDead() { return this.burst && this.life <= 0; }
+        }
+
+        /* Create background hearts */
+        const particles = [];
+        const bgCount = (REDUCED || W < 600) ? 10 : PARTICLE_COUNT;
+        for (let i = 0; i < bgCount; i++) particles.push(new HeartParticle(false));
+
+        /* Animation loop */
+        function animLoop() {
+            ctx.clearRect(0, 0, W, H);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                if (p.isDead()) particles.splice(i, 1);
+            }
+            requestAnimationFrame(animLoop);
+        }
+        if (!REDUCED) animLoop();
+
+        /* Spawn burst hearts on demand */
+        function burstHearts(x, y, count) {
+            const c = (W < 600) ? Math.min(count, 30) : count;
+            for (let i = 0; i < c; i++) particles.push(new HeartParticle(true, x, y));
+        }
+
+        /* ================================================================
+           2. CONFETTI (lightweight rect-based)
+           ================================================================ */
+        function spawnConfetti(cx, cy, count) {
+            const max = (W < 600) ? Math.min(count, 40) : count;
+            const colors = ['#ff6b9f', '#ffcf66', '#ff7b7b', '#00e6a0', '#2bb7ff', '#c792ea'];
+            for (let i = 0; i < max; i++) {
+                const p = {
+                    x: cx, y: cy,
+                    vx: (Math.random() - 0.5) * 9,
+                    vy: (Math.random() - 2) * 7,
+                    size: 3 + Math.random() * 7,
+                    life: 60 + Math.random() * 50,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360
+                };
+                animConfetti(p);
+            }
+        }
+        function animConfetti(p) {
+            const id = setInterval(() => {
+                p.vy += 0.25;
+                p.x += p.vx; p.y += p.vy;
+                p.rot += 5; p.life--;
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rot * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(0, p.life / 60);
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.6);
+                ctx.restore();
+                if (p.life <= 0 || p.y > H + 100) clearInterval(id);
+            }, 16);
+        }
+
+        /* ================================================================
+           3. EMOJI BURST (lightweight DOM particles)
+           ================================================================ */
+        function emojiBurst(cx, cy) {
+            const emojis = ['💙', '💚', '✨', '🥰', '💎', '🎉', '🫶', '💖'];
+            for (let i = 0; i < 20; i++) {
+                const el = document.createElement('span');
+                el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                el.style.cssText = `
+      position:fixed;left:${cx}px;top:${cy}px;
+      pointer-events:none;z-index:9999;font-size:${18 + Math.random() * 16}px;
+      transition:all ${0.8 + Math.random() * 0.6}s cubic-bezier(0.1,0.8,0.3,1);
+    `;
+                document.body.appendChild(el);
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 120 + Math.random() * 280;
+                requestAnimationFrame(() => {
+                    el.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px) scale(0) rotate(${Math.random() * 360}deg)`;
+                    el.style.opacity = '0';
+                });
+                setTimeout(() => el.remove(), 1600);
+            }
+        }
+
+        /* ================================================================
+           4. MODAL HELPERS
+           ================================================================ */
+        function openModal(modal) {
+            modal.classList.add('open');
+            const dlg = modal.querySelector('.modal-dialog');
+            if (dlg) dlg.focus();
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(modal) {
+            modal.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        /* Lazy-load GIF on demand */
+        function lazyGif(img, url) {
+            if (img && url && !img.src) img.src = url;
+        }
+
+        /* ================================================================
+           5. "YES" BUTTON LOGIC
+           ================================================================ */
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const yesModal = document.getElementById('yesModal');
+        const noModal = document.getElementById('noModal');
+        const statusCard = document.getElementById('statusCard');
+        const liveRegion = document.getElementById('liveRegion');
+
+        /* Close buttons */
+        document.getElementById('closeYesModal').addEventListener('click', () => closeModal(yesModal));
+        document.getElementById('closeNoModal').addEventListener('click', () => closeModal(noModal));
+
+        yesBtn.addEventListener('click', () => {
+            /* 1) Pulse animation on button */
+            yesBtn.animate(
+                [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }],
+                { duration: 400 }
+            );
+
+            /* 2) Spawn visual effects */
+            const r = yesBtn.getBoundingClientRect();
+            const cx = r.left + r.width / 2;
+            const cy = r.top + r.height / 2;
+
+            burstHearts(cx, cy, 20);
+            spawnConfetti(cx, cy, CONFETTI_COUNT);
+            emojiBurst(cx, cy);
+
+            /* 3) Card vibration */
+            document.getElementById('mainCard').animate(
+                [{ transform: 'translate(0,0)' }, { transform: 'translate(-2px,1px)' }, { transform: 'translate(2px,-1px)' }, { transform: 'translate(0,0)' }],
+                { duration: 300 }
+            );
+
+            /* 4) Change button text */
+            yesBtn.textContent = 'You made me the happiest! 🥰';
+            yesBtn.style.pointerEvents = 'none';
+
+            /* 5) Update status */
+            statusCard.innerHTML = '<strong>📡 Status</strong> ❤️ Connection: PERFECT!';
+            liveRegion.textContent = 'Ответ принят: Да! Сердца летят!';
+
+            /* 6) Lazy-load GIF + populate carousel + open modal */
+            lazyGif(document.getElementById('yesGifImg'), YES_GIF_URL);
+            populateReasons();
+            setTimeout(() => openModal(yesModal), 350);
+        });
+
+        /* Populate 10 reasons carousel */
+        function populateReasons() {
+            const list = document.getElementById('reasonsList');
+            if (list.children.length) return;
+            REASONS.forEach((text, i) => {
+                const el = document.createElement('div');
+                el.className = 'reason-item';
+                el.textContent = `${i + 1}. ${text}`;
+                list.appendChild(el);
+            });
+        }
+
+        /* ================================================================
+           6. "NO" BUTTON — RUNAWAY LOGIC
+           ================================================================ */
+        let noStep = 0;
+        const mainCard = document.getElementById('mainCard');
+
+        function escapeNoBtn() {
+            /* Move button to random position inside the card */
+            const cardRect = mainCard.getBoundingClientRect();
+            const btnW = noBtn.offsetWidth;
+            const btnH = noBtn.offsetHeight;
+            const pad = 12;
+
+            const maxX = cardRect.width - btnW - pad * 2;
+            const maxY = cardRect.height - btnH - pad * 2;
+
+            const nx = pad + Math.random() * Math.max(maxX, 10);
+            const ny = pad + Math.random() * Math.max(maxY, 10);
+
+            noBtn.style.position = 'absolute';
+            noBtn.style.left = nx + 'px';
+            noBtn.style.top = ny + 'px';
+            noBtn.style.zIndex = '100';
+
+            /* Random micro-effects */
+            const rot = (Math.random() - 0.5) * 30;
+            const sc = 0.7 + Math.random() * 0.3;
+            noBtn.style.transform = `rotate(${rot}deg) scale(${sc})`;
+
+            /* Change text */
+            noBtn.textContent = NO_TEXTS[noStep % NO_TEXTS.length];
+            noStep++;
+        }
+
+        /* Mouse proximity detection — triggers escape */
+        mainCard.addEventListener('mousemove', (e) => {
+            const br = noBtn.getBoundingClientRect();
+            const dx = e.clientX - (br.left + br.width / 2);
+            const dy = e.clientY - (br.top + br.height / 2);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 120) escapeNoBtn();
+        });
+
+        /* Touch support for mobile */
+        mainCard.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            const br = noBtn.getBoundingClientRect();
+            const dx = touch.clientX - (br.left + br.width / 2);
+            const dy = touch.clientY - (br.top + br.height / 2);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 80) escapeNoBtn();
+        }, { passive: true });
+
+        /* Keyboard focus — button escapes + aria notification */
+        noBtn.addEventListener('focus', () => {
+            escapeNoBtn();
+            liveRegion.textContent = "Кнопка 'Нет' убежала! Попробуйте ещё раз.";
+            statusCard.innerHTML = '<strong>📡 Status</strong> 🏃 Кнопка убежала!';
+            setTimeout(() => { liveRegion.textContent = ''; }, 3000);
+        });
+
+        /* If clicked (rare) — show judging GIF, don't actually count it */
+        noBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            lazyGif(document.getElementById('noGifImg'), NO_GIF_URL);
+            openModal(noModal);
+            /* Reset button position after modal closes */
+            setTimeout(() => {
+                noBtn.style.position = '';
+                noBtn.style.left = '';
+                noBtn.style.top = '';
+                noBtn.style.transform = '';
+                noBtn.textContent = 'Нет... 😬';
+                noStep = 0;
+            }, 800);
+        });
+
+        /* ================================================================
+           7. MODAL CLOSE HELPERS
+           ================================================================ */
+        /* ESC key */
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { closeModal(yesModal); closeModal(noModal); }
+            /* Basic focus trap */
+            if (e.key === 'Tab') {
+                const open = document.querySelector('.modal-overlay.open');
+                if (open) { e.preventDefault(); open.querySelector('.modal-dialog').focus(); }
+            }
+        });
+
+        /* Click outside dialog */
+        [yesModal, noModal].forEach(m => {
+            m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+        });
+
+        /* ================================================================
+           8. SHARE BUTTON
+           ================================================================ */
+        document.getElementById('shareBtnModal').addEventListener('click', () => {
+            const url = location.href.split('#')[0] + '#be-my-valentine';
+            navigator.clipboard.writeText(url).then(() => {
+                const t = document.getElementById('toast');
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 3000);
+            });
+        });
+
+        /* ================================================================
+           9. PERFORMANCE SAFEGUARD — prune excess particles periodically
+           ================================================================ */
+        setInterval(() => { if (particles.length > 300) particles.splice(0, 100); }, 5000);
+
+        /* ================================================================
+           10. INITIAL CARD MICRO-ANIMATION
+           ================================================================ */
+        setTimeout(() => {
+            mainCard.animate(
+                [{ transform: 'translateY(4px)' }, { transform: 'translateY(0)' }],
+                { duration: 700, easing: 'ease-out' }
+            );
+        }, 800);
+    </script>
+</body>
+
+</html>
