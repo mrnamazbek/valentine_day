@@ -4,31 +4,49 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Будешь моим Валентином? 💙💚 | Liquid Glass Edition</title>
+    <title>Будешь моим Валентином? 💙💚 | Ultimate Glass Edition</title>
     <!--
   CUSTOMIZATION:
-  1. GIF URLs  → Change YES_GIF_URL / NO_GIF_URL constants in <script>.
-  2. Palette   → Edit CSS variables in :root.
-  3. Content   → Edit the REASONS array and card texts in HTML.
-  4. Particles → Tweak PARTICLE_COUNT / CONFETTI_COUNT in <script>.
+  1. GIF URLs     → YES_GIF_URL / NO_GIF_URL in <script>
+  2. Palette      → CSS variables in :root / [data-theme="neon"]
+  3. Content      → REASONS, NO_TEXTS, ROMANTIC_MSGS arrays
+  4. Particles    → PARTICLE_COUNT, CONFETTI_COUNT
+  5. Easter Egg   → Type "LOVE" on keyboard for secret card
+  6. Mini-game    → Catch 5 floating hearts for bonus message
+  7. Theme toggle → Button in top-right corner
+  8. Audio        → Plays only on YES click (Web Audio API, no files)
 -->
     <style>
-        /* ====================== CSS VARIABLES ====================== */
+        /* ============================== CSS VARIABLES ============================== */
         :root {
             --bg1: #031026;
             --bg2: #04323a;
-            --accent-cyan: #2bb7ff;
-            --accent-emerald: #00e6a0;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --bg3: #021a1e;
+            --accent: #2bb7ff;
+            --accent2: #00e6a0;
+            --accent3: #00d4ff;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-b: rgba(255, 255, 255, 0.08);
             --glass-blur: 18px;
             --text: #e8f4ff;
-            --text-dim: rgba(232, 244, 255, 0.65);
+            --text-dim: rgba(232, 244, 255, 0.6);
             --radius: 24px;
-            --transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+            --ease: cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        /* ====================== RESET ====================== */
+        /* Neon Love Night theme */
+        [data-theme="neon"] {
+            --bg1: #0a0015;
+            --bg2: #1a0028;
+            --bg3: #12001f;
+            --accent: #ff2d7b;
+            --accent2: #ff6ec7;
+            --accent3: #c792ea;
+            --glass: rgba(255, 100, 200, 0.06);
+            --glass-b: rgba(255, 100, 200, 0.12);
+        }
+
+        /* ============================== RESET ============================== */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -42,24 +60,26 @@
 
         body {
             font-family: Inter, "Helvetica Neue", Arial, sans-serif;
-            background: radial-gradient(ellipse 1400px 700px at 8% 15%, rgba(11, 60, 95, 0.4), transparent),
-                linear-gradient(175deg, var(--bg1) 0%, var(--bg2) 55%, #021a1e 100%);
+            background: linear-gradient(175deg, var(--bg1), var(--bg2) 55%, var(--bg3));
             color: var(--text);
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
             overflow-y: auto;
+            transition: background .6s;
         }
 
-        /* ====================== BACKGROUND LAYERS ====================== */
-        /* Slow-moving gradient overlay */
-        .bg-overlay {
+        /* ============================== BACKGROUND LAYERS ============================== */
+        .bg-layer {
             position: fixed;
             inset: 0;
-            pointer-events: none;
+            pointer-events: none
+        }
+
+        .bg-grad {
             z-index: 0;
-            background: linear-gradient(120deg, rgba(43, 183, 255, 0.06), rgba(0, 230, 160, 0.04));
+            background: radial-gradient(ellipse 1400px 700px at 8% 15%, rgba(11, 60, 95, 0.4), transparent);
             mix-blend-mode: overlay;
-            animation: shiftBg 20s linear infinite;
+            animation: shiftBg 22s linear infinite
         }
 
         @keyframes shiftBg {
@@ -76,15 +96,75 @@
             }
         }
 
-        /* Canvas for heart particles */
-        canvas#heartCanvas {
-            position: fixed;
-            inset: 0;
-            z-index: 1;
-            pointer-events: none;
+        canvas#bgCanvas {
+            z-index: 1
         }
 
-        /* ====================== LAYOUT ====================== */
+        canvas#fxCanvas {
+            z-index: 2
+        }
+
+        /* ============================== THEME TOGGLE ============================== */
+        .theme-toggle {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 999;
+            background: var(--glass);
+            border: 1px solid var(--glass-b);
+            backdrop-filter: blur(12px);
+            border-radius: 50px;
+            padding: 8px 16px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all .3s;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05)
+        }
+
+        /* ============================== LOVE COUNTER ============================== */
+        .love-counter {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 999;
+            background: var(--glass);
+            border: 1px solid var(--glass-b);
+            backdrop-filter: blur(12px);
+            border-radius: 50px;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all .3s;
+        }
+
+        .love-counter .heart-icon {
+            display: inline-block;
+            animation: pulse 1s infinite;
+            color: #ff4d6d;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.25)
+            }
+        }
+
+        /* ============================== LAYOUT ============================== */
         .page-wrap {
             position: relative;
             z-index: 10;
@@ -95,20 +175,23 @@
             padding: 30px 16px;
         }
 
-        /* ====================== GLASS CARD ====================== */
+        /* ============================== GLASS CARD ============================== */
         .glass-card {
             position: relative;
-            width: min(960px, 96vw);
+            width: min(980px, 96vw);
             display: grid;
-            grid-template-columns: 1fr 320px;
+            grid-template-columns: 1fr 300px;
             gap: 24px;
-            padding: 36px;
+            padding: 40px;
             border-radius: var(--radius);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            border: 1px solid var(--glass-b);
             backdrop-filter: blur(var(--glass-blur));
-            box-shadow: 0 12px 40px rgba(2, 8, 30, 0.55), 0 0 60px rgba(0, 230, 160, 0.04);
-            animation: cardEntry 0.8s ease-out both 0.3s;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .55), 0 0 60px rgba(0, 230, 160, .04);
+            animation: cardEntry .8s var(--ease) both .3s;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: transform .15s ease-out, box-shadow .3s;
         }
 
         @keyframes cardEntry {
@@ -123,46 +206,85 @@
             }
         }
 
-        /* Rotating neon border glow */
+        /* Shimmer border */
         .glass-card::before {
             content: '';
             position: absolute;
             inset: -1px;
             border-radius: var(--radius);
-            background: conic-gradient(from 0deg, transparent 60%, var(--accent-cyan), transparent 80%);
+            background: conic-gradient(from 0deg, transparent 60%, var(--accent), transparent 80%);
             z-index: -1;
-            animation: rotateGlow 8s linear infinite;
-            opacity: 0.15;
+            animation: shimmer 6s linear infinite;
+            opacity: .18;
         }
 
-        @keyframes rotateGlow {
+        @keyframes shimmer {
             to {
                 transform: rotate(360deg)
             }
         }
 
-        /* ====================== LEFT COLUMN ====================== */
+        /* Hover glow on card */
+        .glass-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .55), 0 0 80px rgba(0, 230, 160, .08);
+        }
+
+        @media(max-width:880px) {
+            .glass-card {
+                grid-template-columns: 1fr;
+                padding: 24px
+            }
+        }
+
+        /* ============================== TYPOGRAPHY ============================== */
         .left h1 {
-            font-size: clamp(22px, 3.8vw, 38px);
-            letter-spacing: -0.5px;
-            line-height: 1.2;
-            margin-bottom: 12px;
+            font-size: clamp(22px, 3.8vw, 36px);
+            letter-spacing: -.5px;
+            line-height: 1.25;
+            margin-bottom: 12px
+        }
+
+        .typewriter-cursor {
+            animation: blink .7s step-end infinite;
+            color: var(--accent)
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0
+            }
         }
 
         .lead {
             color: var(--text-dim);
-            font-size: clamp(14px, 1.6vw, 17px);
+            font-size: clamp(14px, 1.6vw, 16px);
             line-height: 1.55;
-            margin-bottom: 28px;
+            margin-bottom: 14px
         }
 
-        /* ====================== BUTTONS ====================== */
+        /* Rotating romantic message */
+        .romantic-msg {
+            font-size: 13px;
+            color: var(--accent2);
+            margin-bottom: 20px;
+            min-height: 20px;
+            transition: opacity .4s;
+            font-style: italic;
+        }
+
+        /* ============================== BUTTONS ============================== */
         .actions {
             display: flex;
             gap: 14px;
             align-items: center;
             position: relative;
-            min-height: 60px;
+            min-height: 60px
         }
 
         .btn {
@@ -171,91 +293,117 @@
             border-radius: 14px;
             border: none;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all .35s var(--ease);
             outline: none;
         }
 
         .btn:focus-visible {
-            outline: 3px solid rgba(43, 183, 255, 0.5);
-            outline-offset: 2px;
+            outline: 3px solid rgba(43, 183, 255, .5);
+            outline-offset: 2px
         }
 
         .btn-yes {
-            padding: 15px 32px;
+            padding: 15px 34px;
             font-size: 15px;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-emerald));
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
             color: #002129;
-            box-shadow: 0 8px 24px rgba(0, 230, 160, 0.18);
+            box-shadow: 0 8px 24px rgba(0, 230, 160, .18);
+            /* magnetic button needs transform from JS */
         }
 
         .btn-yes:hover {
-            transform: scale(1.04) translateY(-2px);
-            box-shadow: 0 12px 32px rgba(0, 230, 160, 0.28);
+            box-shadow: 0 12px 32px rgba(0, 230, 160, .3)
         }
 
         .btn-yes:active {
-            transform: scale(0.98)
+            transform: scale(.97) !important
         }
 
         .btn-no {
             padding: 13px 24px;
             font-size: 14px;
             background: transparent;
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--glass-b);
             color: var(--text);
-            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all .35s cubic-bezier(.175, .885, .32, 1.275);
         }
 
-        /* ====================== MINI CARDS / ASIDE ====================== */
+        /* ============================== HINT CARDS ============================== */
+        .hint-cards {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px
+        }
+
+        .hint-card {
+            flex: 1 1 130px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, .025);
+            border: 1px solid rgba(255, 255, 255, .04);
+            font-size: 13px;
+            text-align: center;
+            transition: all .4s var(--ease);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hint-card:hover {
+            background: rgba(255, 255, 255, .06);
+            border-color: rgba(0, 230, 160, .15);
+            transform: translateY(-3px);
+        }
+
+        /* Shimmer on hover for hint cards */
+        .hint-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .06), transparent);
+            transition: left .6s;
+        }
+
+        .hint-card:hover::after {
+            left: 100%
+        }
+
+        /* ============================== ASIDE MINI CARDS ============================== */
         .right {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 16px
         }
 
         .mini {
             padding: 16px;
             border-radius: 16px;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008));
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            background: linear-gradient(180deg, rgba(255, 255, 255, .025), rgba(255, 255, 255, .008));
+            border: 1px solid rgba(255, 255, 255, .04);
             backdrop-filter: blur(8px);
             font-size: 13px;
             line-height: 1.5;
             color: var(--text-dim);
+            transition: all .4s;
+            position: relative;
+            overflow: hidden;
         }
 
         .mini strong {
-            color: var(--accent-emerald);
+            color: var(--accent2);
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 4px
         }
 
-        /* ====================== HINT CARDS (below buttons) ====================== */
-        .hint-cards {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 20px;
+        .mini:hover {
+            border-color: rgba(255, 255, 255, .1);
+            background: rgba(255, 255, 255, .04)
         }
 
-        .hint-card {
-            flex: 1 1 140px;
-            padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 13px;
-            text-align: center;
-            transition: var(--transition);
-        }
-
-        .hint-card:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(0, 230, 160, 0.15);
-            transform: translateY(-3px);
-        }
-
-        /* ====================== MODALS ====================== */
+        /* ============================== MODALS ============================== */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -263,11 +411,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, .7);
+            backdrop-filter: blur(10px);
             visibility: hidden;
             opacity: 0;
-            transition: opacity 0.3s, visibility 0.3s;
+            transition: opacity .35s, visibility .35s;
             padding: 20px;
         }
 
@@ -277,17 +425,17 @@
         }
 
         .modal-dialog {
-            width: min(520px, 92vw);
+            width: min(540px, 92vw);
             max-height: 88vh;
             overflow-y: auto;
-            background: linear-gradient(180deg, rgba(10, 20, 40, 0.95), rgba(4, 50, 58, 0.92));
-            border: 1px solid var(--glass-border);
+            background: linear-gradient(180deg, rgba(10, 20, 40, .96), rgba(4, 50, 58, .93));
+            border: 1px solid var(--glass-b);
             backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 28px;
-            transform: scale(0.92);
+            border-radius: 22px;
+            padding: 30px;
+            transform: scale(.9);
             opacity: 0;
-            transition: var(--transition);
+            transition: all .5s var(--ease);
         }
 
         .modal-overlay.open .modal-dialog {
@@ -300,10 +448,48 @@
             max-width: 400px;
             border-radius: 14px;
             display: block;
-            margin: 18px auto;
+            margin: 18px auto
         }
 
-        /* ====================== REASONS CAROUSEL ====================== */
+        /* ============================== YES REVEAL SEQUENCE ============================== */
+        .reveal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 900;
+            background: rgba(0, 0, 0, 0);
+            pointer-events: none;
+            transition: background 1s;
+        }
+
+        .reveal-overlay.active {
+            background: rgba(0, 0, 0, .5);
+            pointer-events: all
+        }
+
+        .glass-heart {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 160px;
+            opacity: 0;
+            z-index: 901;
+            filter: drop-shadow(0 0 60px var(--accent2));
+            transition: all 1.2s var(--ease);
+            pointer-events: none;
+        }
+
+        .glass-heart.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1
+        }
+
+        .glass-heart.burst {
+            transform: translate(-50%, -50%) scale(2);
+            opacity: 0
+        }
+
+        /* ============================== REASONS CAROUSEL ============================== */
         .reasons-wrap {
             margin-top: 18px;
             display: flex;
@@ -319,7 +505,7 @@
         }
 
         .reasons-wrap::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, .1);
             border-radius: 10px
         }
 
@@ -327,20 +513,20 @@
             flex: 0 0 240px;
             padding: 14px;
             border-radius: 14px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-left: 3px solid var(--accent-emerald);
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-left: 3px solid var(--accent2);
             font-size: 13px;
             line-height: 1.45;
         }
 
-        /* ====================== TOAST ====================== */
+        /* ============================== TOAST ============================== */
         .toast {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(80px);
-            background: var(--accent-emerald);
+            background: var(--accent2);
             color: #002129;
             padding: 12px 28px;
             border-radius: 50px;
@@ -348,7 +534,7 @@
             font-size: 14px;
             z-index: 2000;
             opacity: 0;
-            transition: all 0.4s ease;
+            transition: all .4s;
             pointer-events: none;
         }
 
@@ -357,20 +543,20 @@
             opacity: 1
         }
 
-        /* ====================== SHARE BUTTON ====================== */
+        /* ============================== SHARE ============================== */
         .share-btn {
             margin-top: 14px;
             background: none;
             border: none;
-            color: var(--accent-cyan);
+            color: var(--accent);
             cursor: pointer;
             font-size: 13px;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            opacity: 0.7;
-            transition: 0.3s;
+            opacity: .7;
+            transition: .3s;
         }
 
         .share-btn:hover {
@@ -378,19 +564,79 @@
             text-decoration: underline
         }
 
-        /* ====================== RESPONSIVE ====================== */
-        @media (max-width: 880px) {
-            .glass-card {
-                grid-template-columns: 1fr;
-                padding: 24px
+        /* ============================== EASTER EGG CARD ============================== */
+        .easter-egg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            z-index: 1100;
+            background: var(--glass);
+            border: 2px solid var(--accent2);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            transition: all .6s var(--ease);
+            box-shadow: 0 0 80px rgba(0, 230, 160, .2);
+        }
+
+        .easter-egg.show {
+            transform: translate(-50%, -50%) scale(1)
+        }
+
+        .easter-egg h2 {
+            color: var(--accent2);
+            margin-bottom: 12px
+        }
+
+        .easter-egg .close-ee {
+            margin-top: 16px;
+            background: var(--accent2);
+            color: #000;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        /* ============================== MINI-GAME CATCH HEARTS ============================== */
+        .catch-heart {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 800;
+            transition: transform .2s;
+            user-select: none;
+            animation: floatDown linear forwards;
+        }
+
+        @keyframes floatDown {
+            0% {
+                transform: translateY(0) rotate(0)
             }
 
-            .right {
-                order: 2
+            100% {
+                transform: translateY(110vh) rotate(360deg)
             }
         }
 
-        @media (max-width: 500px) {
+        /* ============================== CURSOR TRAIL ============================== */
+        .cursor-heart {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-size: 14px;
+            opacity: 1;
+            transition: all .6s ease-out;
+        }
+
+        /* ============================== RESPONSIVE ============================== */
+        @media(max-width:500px) {
             .actions {
                 flex-direction: column;
                 align-items: stretch
@@ -401,17 +647,21 @@
                 width: 100%;
                 text-align: center
             }
+
+            .glass-heart {
+                font-size: 100px !important
+            }
         }
 
-        /* ====================== REDUCED MOTION ====================== */
-        @media (prefers-reduced-motion: reduce) {
+        /* ============================== REDUCED MOTION ============================== */
+        @media(prefers-reduced-motion:reduce) {
 
             *,
             *::before,
             *::after {
-                animation-duration: 0.01ms !important;
+                animation-duration: .01ms !important;
                 animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
+                transition-duration: .01ms !important;
             }
         }
     </style>
@@ -419,68 +669,93 @@
 
 <body>
     <!-- Background layers -->
-    <div class="bg-overlay" aria-hidden="true"></div>
-    <canvas id="heartCanvas" aria-hidden="true"></canvas>
+    <div class="bg-layer bg-grad" aria-hidden="true"></div>
+    <canvas id="bgCanvas" class="bg-layer" aria-hidden="true"></canvas>
+    <canvas id="fxCanvas" class="bg-layer" aria-hidden="true"></canvas>
 
-    <!-- A11y live region for screen readers -->
+    <!-- Theme toggle -->
+    <button class="theme-toggle" id="themeBtn" aria-label="Сменить тему">🎨 Deep Blue</button>
+
+    <!-- Love counter -->
+    <div class="love-counter" id="loveCounter">
+        <span class="heart-icon">❤️</span>
+        <span id="loveCount">0</span>
+    </div>
+
+    <!-- A11y live region -->
     <div id="liveRegion" aria-live="polite"
         style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)"></div>
 
-    <div class="page-wrap">
-        <div class="glass-card" id="mainCard" role="main" aria-labelledby="mainQuestion">
+    <!-- Reveal sequence overlay -->
+    <div class="reveal-overlay" id="revealOverlay" aria-hidden="true"></div>
+    <div class="glass-heart" id="glassHeart" aria-hidden="true">💎</div>
 
-            <!-- LEFT: Main Content -->
+    <!-- Easter Egg -->
+    <div class="easter-egg" id="easterEgg" role="dialog" aria-modal="true">
+        <h2>💌 Секретное послание!</h2>
+        <p style="color:var(--text-dim)">Ты нашла секрет! Ты — мой код без багов, мой merge без конфликтов, мой деплой
+            без даунтайма.</p>
+        <p style="margin-top:12px;font-size:24px">🫶💙💚✨💎🥰</p>
+        <button class="close-ee" id="closeEE">Закрыть 💖</button>
+    </div>
+
+    <div class="page-wrap">
+        <div class="glass-card" id="mainCard" role="main" aria-labelledby="mainQ">
+
+            <!-- LEFT -->
             <div class="left">
-                <h1 id="mainQuestion">Будешь ли ты моим валентином? 💙💚💫✨🫶</h1>
+                <h1 id="mainQ"><span id="typewriterText"></span><span class="typewriter-cursor">|</span></h1>
                 <p class="lead">
-                    Скажи «Да» — и сердца полетят, конфетти взорвется, а мир станет немного волшебнее. <br>
-                    Или попробуй нажать «Нет»... если сможешь поймать кнопку 😉
+                    Скажи «Да» — и сердца полетят, конфетти взорвется, а мир станет немного волшебнее.<br>
+                    Или попробуй нажать «Нет»... если сможешь 😉
                 </p>
 
-                <!-- Action Buttons -->
+                <!-- Rotating romantic message -->
+                <div class="romantic-msg" id="romanticMsg" aria-live="polite"></div>
+
+                <!-- Buttons -->
                 <div class="actions" id="actionsArea">
                     <button class="btn btn-yes" id="yesBtn" aria-haspopup="dialog">Да — конечно! 💖</button>
                     <button class="btn btn-no" id="noBtn" aria-haspopup="dialog">Нет... 😬</button>
                 </div>
 
-                <!-- Cute Hint Cards -->
+                <!-- Hint cards -->
                 <div class="hint-cards">
-                    <div class="hint-card">Будешь моей Валентинкой? 💙</div>
-                    <div class="hint-card">Разрешишь украсть сердце? 💫</div>
-                    <div class="hint-card">Бесконечные объятия? 🤍</div>
-                    <div class="hint-card">Совпадение или судьба? 💌</div>
-                    <div class="hint-card">Нажмешь «Да»? ✨</div>
+                    <div class="hint-card">Будешь моей? 💙</div>
+                    <div class="hint-card">Украду сердце? 💫</div>
+                    <div class="hint-card">∞ объятий? 🤍</div>
+                    <div class="hint-card">Судьба? 💌</div>
+                    <div class="hint-card">Нажми Да ✨</div>
                 </div>
             </div>
 
-            <!-- RIGHT: Decorative Aside -->
+            <!-- RIGHT -->
             <aside class="right">
                 <div class="mini">
-                    <strong>💎 Design Notes</strong>
-                    Glassmorphism + Deep Blue / Emerald. <br>
-                    Canvas heart particles + Confetti burst.
+                    <strong>💎 Design</strong>
+                    Glassmorphism + Parallax Hearts.<br>
+                    3D Tilt + Shimmer Borders.
                 </div>
                 <div class="mini">
-                    <strong>✨ Fun Fact</strong>
-                    Кнопка «Нет» живёт своей жизнью — она убегает, вращается и даже меняет текст.
+                    <strong>🎮 Mini-game</strong>
+                    Лови сердечки мышкой!<br>
+                    <span id="caughtDisplay">Поймано: 0 / 5</span>
                 </div>
                 <div class="mini" id="statusCard" aria-live="polite" style="min-height:40px">
                     <strong>📡 Status</strong>
                     Ожидание ответа...
                 </div>
             </aside>
-
         </div>
     </div>
 
     <!-- YES Modal -->
-    <div class="modal-overlay" id="yesModal" role="dialog" aria-modal="true" aria-labelledby="yesTitleText">
+    <div class="modal-overlay" id="yesModal" role="dialog" aria-modal="true" aria-labelledby="yesTitle">
         <div class="modal-dialog" id="yesDialog" tabindex="-1">
-            <h2 id="yesTitleText" style="color:var(--accent-emerald)">Ура! 🎉 Ты сделала меня счастливым!</h2>
+            <h2 id="yesTitle" style="color:var(--accent2)">Ура! 🎉 Ты сделала мой день!</h2>
             <p style="color:var(--text-dim);margin:8px 0 0 0">Смотри, что я подготовил:</p>
             <img class="modal-gif" id="yesGifImg" src="" alt="Romantic celebration GIF" loading="lazy">
-            <!-- 10 Reasons Carousel -->
-            <h3 style="margin-top:18px;color:var(--accent-emerald);font-size:15px">10 причин, почему я тебя люблю:</h3>
+            <h3 style="margin-top:18px;color:var(--accent2);font-size:15px">10 причин, почему я тебя люблю:</h3>
             <div class="reasons-wrap" id="reasonsList"></div>
             <button class="share-btn" id="shareBtnModal" type="button">🔗 Копировать ссылку</button>
             <div style="margin-top:14px;text-align:right">
@@ -490,412 +765,554 @@
     </div>
 
     <!-- NO Modal -->
-    <div class="modal-overlay" id="noModal" role="dialog" aria-modal="true" aria-labelledby="noTitleText">
+    <div class="modal-overlay" id="noModal" role="dialog" aria-modal="true" aria-labelledby="noTitle">
         <div class="modal-dialog" id="noDialog" tabindex="-1">
-            <h2 id="noTitleText" style="color:#ff6b6b">Ошибка 404: Отказ не найден! 😅</h2>
-            <p style="color:var(--text-dim);margin:8px 0 0 0">Ну-ну, даже кнопка не хотела... Вот тебе мем!</p>
-            <img class="modal-gif" id="noGifImg" src="" alt="Funny judging GIF" loading="lazy">
+            <h2 id="noTitle" style="color:#ff6b6b">Ошибка 404: Отказ не найден! 😅</h2>
+            <p style="color:var(--text-dim);margin:8px 0 0 0">Даже кнопка не хотела... Вот мем!</p>
+            <img class="modal-gif" id="noGifImg" src="" alt="Funny GIF" loading="lazy">
             <div style="margin-top:14px;text-align:right">
                 <button class="btn btn-no" id="closeNoModal" type="button">Попробовать снова 😉</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast">Ссылка скопирована! 🔗</div>
 
     <script>
         /* ================================================================
-           CONFIGURATION — change these to customize
+           CONFIG
            ================================================================ */
         const YES_GIF_URL = 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif';
         const NO_GIF_URL = 'https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif';
-
-        const PARTICLE_COUNT = 30;   // background floating hearts
-        const CONFETTI_COUNT = 90;   // burst particles on YES click
-        const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const PARTICLE_COUNT = 35;
+        const CONFETTI_COUNT = 100;
+        const REDUCED = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
         const REASONS = [
-            'Твоя улыбка освещает мой день ☀️',
-            'У тебя самое доброе сердце 🤍',
-            'Ты понимаешь меня без слов 🧩',
-            'С тобой никогда не бывает скучно 🎢',
-            'Твоя поддержка даёт мне силы 🛡️',
-            'Ты делаешь меня лучше каждый день 🌱',
-            'Наши разговоры по душам — бесценны 🌌',
-            'Твоё чувство юмора — лучшее 😂',
-            'Твои глаза — целый океан 🌊',
-            'Ты — это просто ТЫ ♾️'
+            'Твоя улыбка освещает день ☀️', 'У тебя самое доброе сердце 🤍',
+            'Ты понимаешь без слов 🧩', 'С тобой не бывает скучно 🎢',
+            'Твоя поддержка — сила 🛡️', 'Ты делаешь лучше 🌱',
+            'Наши разговоры бесценны 🌌', 'Твой юмор — лучший 😂',
+            'Твои глаза — океан 🌊', 'Ты — это ТЫ ♾️'
         ];
-
         const NO_TEXTS = [
-            'Ты уверена? 😢',
-            'Подумай ещё 😄',
-            'Ошибка! Неверный выбор 💫',
-            'Ой, промахнулась? 😉',
-            'Тут нет опции «Нет» 🚫',
-            'Серьёзно?! 🥺',
-            'Попробуй ещё раз 🔄'
+            'Ты уверена? 😢', 'Подумай ещё 😄', 'Ошибка! Неверный выбор 💫',
+            'Промахнулась? 😉', 'Нет опции «Нет» 🚫', 'Серьёзно?! 🥺', 'Ещё раз 🔄'
         ];
+        const ROMANTIC_MSGS = [
+            'Ты — моё нежное утро 🌅', 'Хочу держать руку всегда 🤝',
+            'Ты — лучший сюрприз 🎁', 'Моё сердце бьётся для тебя 💓',
+            'С тобой мир светлее ☀️', 'Ты — моя вселенная 🌌',
+            'Каждый день с тобой — подарок 🎀', 'Ты делаешь жизнь волшебной ✨'
+        ];
+        const TYPEWRITER_TEXT = 'Будешь ли ты моим валентином? 💙💚✨';
 
         /* ================================================================
-           1. CANVAS — Floating Heart-Shaped Particles
+           1. MULTI-LAYER PARALLAX CANVAS (background hearts, stars, bubbles)
            ================================================================ */
-        const canvas = document.getElementById('heartCanvas');
-        const ctx = canvas.getContext('2d');
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        const fxCanvas = document.getElementById('fxCanvas');
+        const fxCtx = fxCanvas.getContext('2d');
         let W, H;
 
         function resize() {
-            W = canvas.width = window.innerWidth;
-            H = canvas.height = window.innerHeight;
+            W = window.innerWidth; H = window.innerHeight;
+            bgCanvas.width = fxCanvas.width = W;
+            bgCanvas.height = fxCanvas.height = H;
         }
         resize();
         window.addEventListener('resize', resize);
 
-        /* Heart shape drawing helper */
-        function drawHeart(x, y, size, angle, color, alpha) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(angle);
-            ctx.scale(size / 40, size / 40);
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
+        /* Draw heart shape */
+        function heartPath(ctx, x, y, s, a, c, al) {
+            ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.scale(s / 40, s / 40);
+            ctx.globalAlpha = al; ctx.fillStyle = c;
+            ctx.beginPath(); ctx.moveTo(0, 0);
             ctx.bezierCurveTo(0, -12, -20, -12, -20, 5);
             ctx.bezierCurveTo(-20, 25, 0, 35, 0, 50);
             ctx.bezierCurveTo(0, 35, 20, 25, 20, 5);
             ctx.bezierCurveTo(20, -12, 0, -12, 0, 0);
-            ctx.fill();
-            ctx.restore();
+            ctx.fill(); ctx.restore();
         }
 
-        /* Particle class for both background and burst */
-        class HeartParticle {
-            constructor(burst, ox, oy) {
-                this.burst = !!burst;
-                this.init(ox, oy);
+        /* Draw star shape */
+        function starPath(ctx, x, y, s, a, c, al) {
+            ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+            ctx.globalAlpha = al; ctx.fillStyle = c;
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                ctx.lineTo(Math.cos((18 + i * 72) * Math.PI / 180) * s, Math.sin((18 + i * 72) * Math.PI / 180) * s);
+                ctx.lineTo(Math.cos((54 + i * 72) * Math.PI / 180) * s * .4, Math.sin((54 + i * 72) * Math.PI / 180) * s * .4);
             }
-            init(ox, oy) {
-                if (this.burst) {
-                    this.x = ox;
-                    this.y = oy;
-                    this.vx = (Math.random() - 0.5) * 10;
-                    this.vy = (Math.random() - 0.8) * 8;
-                    this.life = 70 + Math.random() * 40;
-                    this.maxLife = this.life;
-                } else {
-                    this.x = Math.random() * W;
-                    this.y = Math.random() * H;
-                    this.vx = (Math.random() - 0.5) * 0.35;
-                    this.vy = -0.2 - Math.random() * 0.5;
-                    this.life = Infinity;
-                }
-                this.size = 6 + Math.random() * 20;
+            ctx.closePath(); ctx.fill(); ctx.restore();
+        }
+
+        /* Draw diamond/sparkle */
+        function sparklePath(ctx, x, y, s, al) {
+            ctx.save(); ctx.translate(x, y); ctx.globalAlpha = al;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.moveTo(0, -s); ctx.lineTo(s * .3, 0);
+            ctx.lineTo(0, s); ctx.lineTo(-s * .3, 0);
+            ctx.closePath(); ctx.fill(); ctx.restore();
+        }
+
+        /* Parallax particle class — 3 speed layers */
+        class BgParticle {
+            constructor(layer) {
+                this.layer = layer; // 0=slow,1=mid,2=fast
+                this.type = ['heart', 'star', 'bubble', 'sparkle', 'ring', 'letter'][Math.floor(Math.random() * 6)];
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * W;
+                this.y = H + 50 + Math.random() * 200;
+                const speeds = [.3, .6, 1.2];
+                this.vy = -(speeds[this.layer] + Math.random() * .3);
+                this.vx = (Math.random() - .5) * .4;
+                this.size = 4 + Math.random() * 14;
                 this.angle = Math.random() * Math.PI * 2;
-                this.spin = (Math.random() - 0.5) * 0.025;
-                this.baseAlpha = 0.15 + Math.random() * 0.45;
-                this.color = Math.random() > 0.5 ? 'rgba(43,183,255,1)' : 'rgba(0,230,160,1)';
+                this.spin = (Math.random() - .5) * .02;
+                this.alpha = (.1 + Math.random() * .3) * (this.layer === 0 ? .5 : this.layer === 1 ? .7 : 1);
+                const pal = document.documentElement.dataset.theme === 'neon'
+                    ? ['rgba(255,45,123,1)', 'rgba(255,110,199,1)', 'rgba(199,146,234,1)']
+                    : ['rgba(43,183,255,1)', 'rgba(0,230,160,1)', 'rgba(0,212,255,1)'];
+                this.color = pal[Math.floor(Math.random() * pal.length)];
+                this.emoji = ['💌', '💍', '✨', '🌸', '⭐'][Math.floor(Math.random() * 5)];
             }
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.angle += this.spin;
-                if (this.burst) {
-                    this.vy += 0.12; // gravity
-                    this.life--;
+                this.x += this.vx; this.y += this.vy; this.angle += this.spin;
+                if (this.y < -80 || this.x < -80 || this.x > W + 80) this.reset();
+            }
+            draw(ctx) {
+                if (this.type === 'heart') heartPath(ctx, this.x, this.y, this.size, this.angle, this.color, this.alpha);
+                else if (this.type === 'star') starPath(ctx, this.x, this.y, this.size * .6, this.angle, this.color, this.alpha);
+                else if (this.type === 'sparkle') sparklePath(ctx, this.x, this.y, this.size * .5, this.alpha);
+                else if (this.type === 'bubble') {
+                    ctx.save(); ctx.globalAlpha = this.alpha * .5;
+                    ctx.strokeStyle = this.color; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.stroke(); ctx.restore();
                 } else {
-                    if (this.y < -60) { this.y = H + 60; this.x = Math.random() * W; }
-                    if (this.x < -60 || this.x > W + 60) { this.y = H + 60; this.x = Math.random() * W; }
+                    ctx.save(); ctx.globalAlpha = this.alpha;
+                    ctx.font = `${this.size * 1.5}px serif`; ctx.textAlign = 'center';
+                    ctx.fillText(this.emoji, this.x, this.y); ctx.restore();
                 }
             }
-            draw() {
-                let alpha = this.baseAlpha;
-                if (this.burst) alpha = this.baseAlpha * (this.life / this.maxLife);
-                if (alpha <= 0) return;
-                drawHeart(this.x, this.y, this.size, this.angle, this.color, alpha);
-            }
-            isDead() { return this.burst && this.life <= 0; }
         }
 
-        /* Create background hearts */
-        const particles = [];
-        const bgCount = (REDUCED || W < 600) ? 10 : PARTICLE_COUNT;
-        for (let i = 0; i < bgCount; i++) particles.push(new HeartParticle(false));
-
-        /* Animation loop */
-        function animLoop() {
-            ctx.clearRect(0, 0, W, H);
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.update();
-                p.draw();
-                if (p.isDead()) particles.splice(i, 1);
-            }
-            requestAnimationFrame(animLoop);
-        }
-        if (!REDUCED) animLoop();
-
-        /* Spawn burst hearts on demand */
-        function burstHearts(x, y, count) {
-            const c = (W < 600) ? Math.min(count, 30) : count;
-            for (let i = 0; i < c; i++) particles.push(new HeartParticle(true, x, y));
+        const bgParticles = [];
+        const count = REDUCED ? 8 : (W < 600 ? 15 : PARTICLE_COUNT);
+        for (let l = 0; l < 3; l++)for (let i = 0; i < Math.floor(count / 3); i++) {
+            const p = new BgParticle(l); p.y = Math.random() * H; // start scattered
+            bgParticles.push(p);
         }
 
         /* ================================================================
-           2. CONFETTI (lightweight rect-based)
+           2. FX PARTICLES (burst hearts, confetti) — drawn on fxCanvas
            ================================================================ */
-        function spawnConfetti(cx, cy, count) {
-            const max = (W < 600) ? Math.min(count, 40) : count;
-            const colors = ['#ff6b9f', '#ffcf66', '#ff7b7b', '#00e6a0', '#2bb7ff', '#c792ea'];
-            for (let i = 0; i < max; i++) {
-                const p = {
-                    x: cx, y: cy,
-                    vx: (Math.random() - 0.5) * 9,
-                    vy: (Math.random() - 2) * 7,
-                    size: 3 + Math.random() * 7,
-                    life: 60 + Math.random() * 50,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    rot: Math.random() * 360
-                };
-                animConfetti(p);
+        const fxParticles = [];
+
+        class FxParticle {
+            constructor(x, y, type) {
+                this.x = x; this.y = y; this.type = type;
+                this.vx = (Math.random() - .5) * (type === 'confetti' ? 9 : 10);
+                this.vy = (Math.random() - .8) * (type === 'confetti' ? 7 : 8);
+                this.life = 60 + Math.random() * 40; this.maxLife = this.life;
+                this.size = type === 'confetti' ? 3 + Math.random() * 6 : 6 + Math.random() * 16;
+                this.rot = Math.random() * 360; this.spin = (Math.random() - .5) * .04;
+                const cols = ['#ff6b9f', '#ffcf66', '#ff7b7b', '#00e6a0', '#2bb7ff', '#c792ea'];
+                this.color = cols[Math.floor(Math.random() * cols.length)];
+                this.angle = Math.random() * Math.PI * 2;
             }
+            update() {
+                this.vy += .15; this.x += this.vx; this.y += this.vy;
+                this.rot += 5; this.angle += this.spin; this.life--;
+            }
+            draw(ctx) {
+                const al = Math.max(0, this.life / this.maxLife);
+                if (this.type === 'heart') {
+                    heartPath(ctx, this.x, this.y, this.size, this.angle, this.color, al);
+                } else {
+                    ctx.save(); ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rot * Math.PI / 180);
+                    ctx.fillStyle = this.color; ctx.globalAlpha = al;
+                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size * 1.6);
+                    ctx.restore();
+                }
+            }
+            isDead() { return this.life <= 0 }
         }
-        function animConfetti(p) {
-            const id = setInterval(() => {
-                p.vy += 0.25;
-                p.x += p.vx; p.y += p.vy;
-                p.rot += 5; p.life--;
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rot * Math.PI / 180);
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = Math.max(0, p.life / 60);
-                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.6);
-                ctx.restore();
-                if (p.life <= 0 || p.y > H + 100) clearInterval(id);
-            }, 16);
+
+        function burstHearts(x, y, n) {
+            const c = W < 600 ? Math.min(n, 20) : n;
+            for (let i = 0; i < c; i++)fxParticles.push(new FxParticle(x, y, 'heart'));
+        }
+        function spawnConfetti(x, y, n) {
+            const c = W < 600 ? Math.min(n, 40) : n;
+            for (let i = 0; i < c; i++)fxParticles.push(new FxParticle(x, y, 'confetti'));
         }
 
         /* ================================================================
-           3. EMOJI BURST (lightweight DOM particles)
+           MAIN ANIMATION LOOP
+           ================================================================ */
+        function mainLoop() {
+            // Background layer
+            bgCtx.clearRect(0, 0, W, H);
+            for (const p of bgParticles) { p.update(); p.draw(bgCtx); }
+
+            // FX layer
+            fxCtx.clearRect(0, 0, W, H);
+            for (let i = fxParticles.length - 1; i >= 0; i--) {
+                fxParticles[i].update(); fxParticles[i].draw(fxCtx);
+                if (fxParticles[i].isDead()) fxParticles.splice(i, 1);
+            }
+            requestAnimationFrame(mainLoop);
+        }
+        if (!REDUCED) mainLoop();
+
+        /* Prune excess particles */
+        setInterval(() => { if (fxParticles.length > 400) fxParticles.splice(0, 150) }, 4000);
+
+        /* ================================================================
+           3. EMOJI BURST (DOM-based)
            ================================================================ */
         function emojiBurst(cx, cy) {
             const emojis = ['💙', '💚', '✨', '🥰', '💎', '🎉', '🫶', '💖'];
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 18; i++) {
                 const el = document.createElement('span');
                 el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-                el.style.cssText = `
-      position:fixed;left:${cx}px;top:${cy}px;
-      pointer-events:none;z-index:9999;font-size:${18 + Math.random() * 16}px;
-      transition:all ${0.8 + Math.random() * 0.6}s cubic-bezier(0.1,0.8,0.3,1);
-    `;
+                el.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;pointer-events:none;z-index:9999;font-size:${16 + Math.random() * 16}px;transition:all ${.7 + Math.random() * .5}s cubic-bezier(.1,.8,.3,1)`;
                 document.body.appendChild(el);
-                const angle = Math.random() * Math.PI * 2;
-                const dist = 120 + Math.random() * 280;
+                const a = Math.random() * Math.PI * 2, d = 100 + Math.random() * 250;
                 requestAnimationFrame(() => {
-                    el.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px) scale(0) rotate(${Math.random() * 360}deg)`;
+                    el.style.transform = `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(0) rotate(${Math.random() * 360}deg)`;
                     el.style.opacity = '0';
                 });
-                setTimeout(() => el.remove(), 1600);
+                setTimeout(() => el.remove(), 1400);
             }
         }
 
         /* ================================================================
-           4. MODAL HELPERS
+           4. TYPEWRITER EFFECT
            ================================================================ */
-        function openModal(modal) {
-            modal.classList.add('open');
-            const dlg = modal.querySelector('.modal-dialog');
-            if (dlg) dlg.focus();
-            document.body.style.overflow = 'hidden';
+        const twEl = document.getElementById('typewriterText');
+        let twIdx = 0;
+        function typewrite() {
+            if (twIdx <= TYPEWRITER_TEXT.length) {
+                twEl.textContent = TYPEWRITER_TEXT.slice(0, twIdx);
+                twIdx++;
+                setTimeout(typewrite, REDUCED ? 5 : 55);
+            }
         }
-        function closeModal(modal) {
-            modal.classList.remove('open');
-            document.body.style.overflow = '';
-        }
+        typewrite();
 
-        /* Lazy-load GIF on demand */
-        function lazyGif(img, url) {
-            if (img && url && !img.src) img.src = url;
+        /* ================================================================
+           5. ROTATING ROMANTIC MESSAGES
+           ================================================================ */
+        const rmEl = document.getElementById('romanticMsg');
+        let rmIdx = 0;
+        function rotateMsg() {
+            rmEl.style.opacity = '0';
+            setTimeout(() => {
+                rmEl.textContent = ROMANTIC_MSGS[rmIdx % ROMANTIC_MSGS.length];
+                rmEl.style.opacity = '1'; rmIdx++;
+            }, 400);
+        }
+        rotateMsg();
+        setInterval(rotateMsg, 5000);
+
+        /* ================================================================
+           6. CURSOR HEART TRAIL
+           ================================================================ */
+        if (!REDUCED) {
+            let lastTrail = 0;
+            document.addEventListener('mousemove', e => {
+                if (Date.now() - lastTrail < 80) return; lastTrail = Date.now();
+                const h = document.createElement('span');
+                h.className = 'cursor-heart';
+                h.textContent = ['❤️', '💙', '💚', '✨'][Math.floor(Math.random() * 4)];
+                h.style.left = e.clientX + 'px'; h.style.top = e.clientY + 'px';
+                document.body.appendChild(h);
+                requestAnimationFrame(() => {
+                    h.style.transform = `translate(${(Math.random() - .5) * 40}px,${-30 - Math.random() * 30}px) scale(0)`;
+                    h.style.opacity = '0';
+                });
+                setTimeout(() => h.remove(), 700);
+            });
         }
 
         /* ================================================================
-           5. "YES" BUTTON LOGIC
+           7. 3D TILT EFFECT on glass card
+           ================================================================ */
+        const mainCard = document.getElementById('mainCard');
+        if (!REDUCED) {
+            mainCard.addEventListener('mousemove', e => {
+                const r = mainCard.getBoundingClientRect();
+                const x = (e.clientX - r.left) / r.width - .5;
+                const y = (e.clientY - r.top) / r.height - .5;
+                mainCard.style.transform = `perspective(1000px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg)`;
+            });
+            mainCard.addEventListener('mouseleave', () => {
+                mainCard.style.transform = 'perspective(1000px) rotateY(0) rotateX(0)';
+            });
+        }
+
+        /* ================================================================
+           8. MAGNETIC YES BUTTON
            ================================================================ */
         const yesBtn = document.getElementById('yesBtn');
+        if (!REDUCED) {
+            yesBtn.addEventListener('mousemove', e => {
+                const r = yesBtn.getBoundingClientRect();
+                const dx = e.clientX - (r.left + r.width / 2);
+                const dy = e.clientY - (r.top + r.height / 2);
+                yesBtn.style.transform = `translate(${dx * .25}px,${dy * .25}px)`;
+            });
+            yesBtn.addEventListener('mouseleave', () => { yesBtn.style.transform = '' });
+        }
+
+        /* ================================================================
+           9. LOVE COUNTER
+           ================================================================ */
+        let loveCount = 0;
+        const loveCountEl = document.getElementById('loveCount');
+        function addLove(n = 1) {
+            loveCount += n; loveCountEl.textContent = loveCount;
+            loveCountEl.animate([{ transform: 'scale(1.4)' }, { transform: 'scale(1)' }], { duration: 300 });
+        }
+        document.body.addEventListener('click', () => addLove(1));
+
+        /* ================================================================
+           10. THEME TOGGLE
+           ================================================================ */
+        const themeBtn = document.getElementById('themeBtn');
+        themeBtn.addEventListener('click', () => {
+            const isNeon = document.documentElement.dataset.theme === 'neon';
+            document.documentElement.dataset.theme = isNeon ? '' : 'neon';
+            themeBtn.textContent = isNeon ? '🎨 Deep Blue' : '🌙 Neon Love';
+            // Re-color existing particles
+            bgParticles.forEach(p => {
+                const pal = isNeon
+                    ? ['rgba(43,183,255,1)', 'rgba(0,230,160,1)', 'rgba(0,212,255,1)']
+                    : ['rgba(255,45,123,1)', 'rgba(255,110,199,1)', 'rgba(199,146,234,1)'];
+                p.color = pal[Math.floor(Math.random() * pal.length)];
+            });
+        });
+
+        /* ================================================================
+           11. WEB AUDIO API — romantic chord on YES
+           ================================================================ */
+        function playLoveChord() {
+            try {
+                const ac = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [261.63, 329.63, 392.00, 523.25]; // C4 E4 G4 C5
+                notes.forEach((freq, i) => {
+                    const osc = ac.createOscillator();
+                    const gain = ac.createGain();
+                    osc.type = 'sine'; osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(.08, ac.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(.001, ac.currentTime + 2);
+                    osc.connect(gain); gain.connect(ac.destination);
+                    osc.start(ac.currentTime + i * .08);
+                    osc.stop(ac.currentTime + 2.2);
+                });
+            } catch (e) { }
+        }
+
+        /* ================================================================
+           12. YES BUTTON — MULTI-STEP REVEAL SEQUENCE
+           ================================================================ */
         const noBtn = document.getElementById('noBtn');
         const yesModal = document.getElementById('yesModal');
         const noModal = document.getElementById('noModal');
         const statusCard = document.getElementById('statusCard');
         const liveRegion = document.getElementById('liveRegion');
+        const revealOverlay = document.getElementById('revealOverlay');
+        const glassHeart = document.getElementById('glassHeart');
 
-        /* Close buttons */
+        function openModal(m) { m.classList.add('open'); const d = m.querySelector('.modal-dialog'); if (d) d.focus(); document.body.style.overflow = 'hidden' }
+        function closeModal(m) { m.classList.remove('open'); document.body.style.overflow = '' }
+        function lazyGif(img, url) { if (img && url && !img.src) img.src = url }
+
         document.getElementById('closeYesModal').addEventListener('click', () => closeModal(yesModal));
         document.getElementById('closeNoModal').addEventListener('click', () => closeModal(noModal));
 
         yesBtn.addEventListener('click', () => {
-            /* 1) Pulse animation on button */
-            yesBtn.animate(
-                [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }],
-                { duration: 400 }
-            );
+            playLoveChord();
+            addLove(10);
 
-            /* 2) Spawn visual effects */
-            const r = yesBtn.getBoundingClientRect();
-            const cx = r.left + r.width / 2;
-            const cy = r.top + r.height / 2;
+            /* Step 1: Darken screen */
+            revealOverlay.classList.add('active');
 
-            burstHearts(cx, cy, 20);
-            spawnConfetti(cx, cy, CONFETTI_COUNT);
-            emojiBurst(cx, cy);
+            /* Step 2: Show glass heart (after 600ms) */
+            setTimeout(() => { glassHeart.classList.add('show') }, 600);
 
-            /* 3) Card vibration */
-            document.getElementById('mainCard').animate(
-                [{ transform: 'translate(0,0)' }, { transform: 'translate(-2px,1px)' }, { transform: 'translate(2px,-1px)' }, { transform: 'translate(0,0)' }],
-                { duration: 300 }
-            );
+            /* Step 3: Heart "opens" — burst (after 2s) */
+            setTimeout(() => {
+                glassHeart.classList.add('burst');
+                const r = yesBtn.getBoundingClientRect();
+                const cx = W / 2, cy = H / 2;
+                burstHearts(cx, cy, 25);
+                spawnConfetti(cx, cy, CONFETTI_COUNT);
+                emojiBurst(cx, cy);
+            }, 2000);
 
-            /* 4) Change button text */
-            yesBtn.textContent = 'You made me the happiest! 🥰';
-            yesBtn.style.pointerEvents = 'none';
+            /* Step 4: Remove overlay, show modal (after 3.2s) */
+            setTimeout(() => {
+                revealOverlay.classList.remove('active');
+                glassHeart.classList.remove('show', 'burst');
+                glassHeart.style.display = 'none';
 
-            /* 5) Update status */
-            statusCard.innerHTML = '<strong>📡 Status</strong> ❤️ Connection: PERFECT!';
-            liveRegion.textContent = 'Ответ принят: Да! Сердца летят!';
+                yesBtn.textContent = 'You made me the happiest! 🥰';
+                yesBtn.style.pointerEvents = 'none';
+                statusCard.innerHTML = '<strong>📡 Status</strong> ❤️ PERFECT CONNECTION!';
+                liveRegion.textContent = 'Ответ: Да! Сердца летят!';
 
-            /* 6) Lazy-load GIF + populate carousel + open modal */
-            lazyGif(document.getElementById('yesGifImg'), YES_GIF_URL);
-            populateReasons();
-            setTimeout(() => openModal(yesModal), 350);
+                lazyGif(document.getElementById('yesGifImg'), YES_GIF_URL);
+                populateReasons();
+                openModal(yesModal);
+
+                mainCard.animate(
+                    [{ transform: 'translate(0,0)' }, { transform: 'translate(-2px,1px)' }, { transform: 'translate(2px,-1px)' }, { transform: 'translate(0,0)' }],
+                    { duration: 300 }
+                );
+            }, 3200);
         });
 
-        /* Populate 10 reasons carousel */
         function populateReasons() {
             const list = document.getElementById('reasonsList');
             if (list.children.length) return;
-            REASONS.forEach((text, i) => {
+            REASONS.forEach((t, i) => {
                 const el = document.createElement('div');
-                el.className = 'reason-item';
-                el.textContent = `${i + 1}. ${text}`;
+                el.className = 'reason-item'; el.textContent = `${i + 1}. ${t}`;
                 list.appendChild(el);
             });
         }
 
         /* ================================================================
-           6. "NO" BUTTON — RUNAWAY LOGIC
+           13. NO BUTTON — RUNAWAY with text change + shrink + rotate
            ================================================================ */
         let noStep = 0;
-        const mainCard = document.getElementById('mainCard');
-
         function escapeNoBtn() {
-            /* Move button to random position inside the card */
-            const cardRect = mainCard.getBoundingClientRect();
-            const btnW = noBtn.offsetWidth;
-            const btnH = noBtn.offsetHeight;
+            const cr = mainCard.getBoundingClientRect();
             const pad = 12;
-
-            const maxX = cardRect.width - btnW - pad * 2;
-            const maxY = cardRect.height - btnH - pad * 2;
-
-            const nx = pad + Math.random() * Math.max(maxX, 10);
-            const ny = pad + Math.random() * Math.max(maxY, 10);
-
+            const maxX = cr.width - noBtn.offsetWidth - pad * 2;
+            const maxY = cr.height - noBtn.offsetHeight - pad * 2;
             noBtn.style.position = 'absolute';
-            noBtn.style.left = nx + 'px';
-            noBtn.style.top = ny + 'px';
+            noBtn.style.left = pad + Math.random() * Math.max(maxX, 10) + 'px';
+            noBtn.style.top = pad + Math.random() * Math.max(maxY, 10) + 'px';
             noBtn.style.zIndex = '100';
-
-            /* Random micro-effects */
-            const rot = (Math.random() - 0.5) * 30;
-            const sc = 0.7 + Math.random() * 0.3;
+            const rot = (Math.random() - .5) * 30, sc = .65 + Math.random() * .35;
             noBtn.style.transform = `rotate(${rot}deg) scale(${sc})`;
-
-            /* Change text */
+            noBtn.style.opacity = (.5 + Math.random() * .5).toFixed(2);
             noBtn.textContent = NO_TEXTS[noStep % NO_TEXTS.length];
             noStep++;
         }
 
-        /* Mouse proximity detection — triggers escape */
-        mainCard.addEventListener('mousemove', (e) => {
+        mainCard.addEventListener('mousemove', e => {
             const br = noBtn.getBoundingClientRect();
             const dx = e.clientX - (br.left + br.width / 2);
             const dy = e.clientY - (br.top + br.height / 2);
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 120) escapeNoBtn();
+            if (Math.sqrt(dx * dx + dy * dy) < 120) escapeNoBtn();
         });
-
-        /* Touch support for mobile */
-        mainCard.addEventListener('touchmove', (e) => {
-            const touch = e.touches[0];
-            const br = noBtn.getBoundingClientRect();
-            const dx = touch.clientX - (br.left + br.width / 2);
-            const dy = touch.clientY - (br.top + br.height / 2);
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 80) escapeNoBtn();
+        mainCard.addEventListener('touchmove', e => {
+            const t = e.touches[0]; const br = noBtn.getBoundingClientRect();
+            const dx = t.clientX - (br.left + br.width / 2);
+            const dy = t.clientY - (br.top + br.height / 2);
+            if (Math.sqrt(dx * dx + dy * dy) < 80) escapeNoBtn();
         }, { passive: true });
-
-        /* Keyboard focus — button escapes + aria notification */
         noBtn.addEventListener('focus', () => {
             escapeNoBtn();
-            liveRegion.textContent = "Кнопка 'Нет' убежала! Попробуйте ещё раз.";
-            statusCard.innerHTML = '<strong>📡 Status</strong> 🏃 Кнопка убежала!';
-            setTimeout(() => { liveRegion.textContent = ''; }, 3000);
+            liveRegion.textContent = "Кнопка 'Нет' убежала!";
+            statusCard.innerHTML = '<strong>📡 Status</strong> 🏃 Убежала!';
+            setTimeout(() => { liveRegion.textContent = '' }, 3000);
         });
-
-        /* If clicked (rare) — show judging GIF, don't actually count it */
-        noBtn.addEventListener('click', (e) => {
+        noBtn.addEventListener('click', e => {
             e.preventDefault();
             lazyGif(document.getElementById('noGifImg'), NO_GIF_URL);
             openModal(noModal);
-            /* Reset button position after modal closes */
             setTimeout(() => {
-                noBtn.style.position = '';
-                noBtn.style.left = '';
-                noBtn.style.top = '';
-                noBtn.style.transform = '';
-                noBtn.textContent = 'Нет... 😬';
-                noStep = 0;
+                noBtn.style = ''; noBtn.textContent = 'Нет... 😬'; noStep = 0;
             }, 800);
         });
 
         /* ================================================================
-           7. MODAL CLOSE HELPERS
+           14. MODAL CLOSE HELPERS (ESC, outside click, focus trap)
            ================================================================ */
-        /* ESC key */
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') { closeModal(yesModal); closeModal(noModal); }
-            /* Basic focus trap */
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeModal(yesModal); closeModal(noModal) }
             if (e.key === 'Tab') {
-                const open = document.querySelector('.modal-overlay.open');
-                if (open) { e.preventDefault(); open.querySelector('.modal-dialog').focus(); }
+                const o = document.querySelector('.modal-overlay.open');
+                if (o) { e.preventDefault(); o.querySelector('.modal-dialog').focus() }
             }
         });
-
-        /* Click outside dialog */
         [yesModal, noModal].forEach(m => {
-            m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+            m.addEventListener('click', e => { if (e.target === m) closeModal(m) });
         });
 
         /* ================================================================
-           8. SHARE BUTTON
+           15. SHARE BUTTON
            ================================================================ */
         document.getElementById('shareBtnModal').addEventListener('click', () => {
-            const url = location.href.split('#')[0] + '#be-my-valentine';
-            navigator.clipboard.writeText(url).then(() => {
+            navigator.clipboard.writeText(location.href.split('#')[0] + '#be-my-valentine').then(() => {
                 const t = document.getElementById('toast');
-                t.classList.add('show');
-                setTimeout(() => t.classList.remove('show'), 3000);
+                t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
             });
         });
 
         /* ================================================================
-           9. PERFORMANCE SAFEGUARD — prune excess particles periodically
+           16. EASTER EGG — type "LOVE" to reveal secret card
            ================================================================ */
-        setInterval(() => { if (particles.length > 300) particles.splice(0, 100); }, 5000);
+        let eggBuf = '';
+        const easterEgg = document.getElementById('easterEgg');
+        document.addEventListener('keydown', e => {
+            if (e.key.length === 1) eggBuf += e.key.toUpperCase();
+            if (eggBuf.length > 10) eggBuf = eggBuf.slice(-10);
+            if (eggBuf.includes('LOVE')) {
+                easterEgg.classList.add('show'); eggBuf = '';
+                addLove(20);
+                liveRegion.textContent = 'Секретная карточка найдена!';
+            }
+        });
+        document.getElementById('closeEE').addEventListener('click', () => {
+            easterEgg.classList.remove('show');
+        });
 
         /* ================================================================
-           10. INITIAL CARD MICRO-ANIMATION
+           17. MINI-GAME: Catch Hearts
+           ================================================================ */
+        let caught = 0;
+        const caughtDisplay = document.getElementById('caughtDisplay');
+
+        function spawnCatchHeart() {
+            if (caught >= 5 || REDUCED) return;
+            const el = document.createElement('div');
+            el.className = 'catch-heart';
+            el.textContent = '❤️';
+            el.style.left = 20 + Math.random() * (W - 60) + 'px';
+            el.style.top = '-40px';
+            el.style.animationDuration = (4 + Math.random() * 3) + 's';
+            document.body.appendChild(el);
+
+            el.addEventListener('click', () => {
+                caught++; caughtDisplay.textContent = `Поймано: ${caught} / 5`;
+                el.remove(); addLove(3);
+                if (caught >= 5) {
+                    statusCard.innerHTML = '<strong>📡 Status</strong> 🏆 Все сердца пойманы!';
+                    const t = document.getElementById('toast');
+                    t.textContent = '🏆 Бонус: Ты поймала все сердца! Ты лучшая!';
+                    t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); t.textContent = 'Ссылка скопирована! 🔗' }, 4000);
+                }
+            });
+            el.addEventListener('animationend', () => el.remove());
+        }
+        setInterval(spawnCatchHeart, 3500);
+        setTimeout(spawnCatchHeart, 2000);
+
+        /* ================================================================
+           18. INITIAL MICRO-ANIMATION for card
            ================================================================ */
         setTimeout(() => {
             mainCard.animate(

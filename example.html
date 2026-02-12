@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Будешь ли ты моим валентином? / Will you be my Valentine?</title>
+    <!--
+  Top notes:
+  - Replace YES_GIF_URL and NO_GIF_URL below with real GIF/Lottie URLs.
+  - Change CSS variables (--accent-*) to tweak palette.
+  - Comments are short, in English (developer style).
+-->
+    <style>
+        /* palette */
+        :root {
+            --bg1: #031026;
+            --bg2: #04323a;
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --accent-1: #00e6a0;
+            /* emerald neon */
+            --accent-2: #2bb7ff;
+            /* deep cyan */
+            --card-radius: 18px;
+            --glass-blur: 10px;
+            --text: #e8f4ff;
+        }
+
+        /* reset */
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(1200px 600px at 10% 10%, rgba(11, 60, 95, 0.35), transparent),
+                linear-gradient(180deg, var(--bg1), var(--bg2) 60%);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+        }
+
+        /* animated subtle gradient overlay */
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(90deg, rgba(43, 183, 255, 0.08), rgba(0, 230, 160, 0.06));
+            mix-blend-mode: overlay;
+            animation: slowShift 18s linear infinite;
+            opacity: .9;
+        }
+
+        @keyframes slowShift {
+            0% {
+                transform: translateX(-10%)
+            }
+
+            50% {
+                transform: translateX(10%)
+            }
+
+            100% {
+                transform: translateX(-10%)
+            }
+        }
+
+        /* container */
+        .wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        /* glass card */
+        .card {
+            position: relative;
+            width: min(920px, 96vw);
+            max-width: 920px;
+            padding: 28px;
+            border-radius: var(--card-radius);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(var(--glass-blur));
+            box-shadow: 0 8px 30px rgba(2, 8, 30, 0.6);
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+        }
+
+        /* heading & copy */
+        .left h1 {
+            margin: 0 0 8px 0;
+            font-size: clamp(20px, 3.4vw, 36px);
+            letter-spacing: -0.6px;
+        }
+
+        .lead {
+            margin: 6px 0 16px 0;
+            color: rgba(232, 244, 255, 0.9);
+            font-size: clamp(14px, 1.6vw, 16px);
+        }
+
+        /* buttons */
+        .actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 10px
+        }
+
+        .btn {
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transform-origin: center;
+            transition: transform .18s ease, box-shadow .18s ease;
+        }
+
+        .btn:focus {
+            outline: 3px solid rgba(255, 255, 255, 0.06)
+        }
+
+        .btn-yes {
+            background: linear-gradient(90deg, var(--accent-2), var(--accent-1));
+            color: #002129;
+            box-shadow: 0 6px 20px rgba(0, 230, 160, 0.12);
+        }
+
+        .btn-yes:active {
+            transform: scale(.98)
+        }
+
+        .btn-no {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text);
+        }
+
+        /* right side cards (decorative) */
+        .right {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            align-items: stretch;
+        }
+
+        .mini {
+            padding: 12px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(6px);
+            font-size: 13px;
+        }
+
+        /* modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.45);
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity .18s ease, visibility .18s;
+        }
+
+        .modal.open {
+            visibility: visible;
+            opacity: 1
+        }
+
+        .modal .dialog {
+            width: min(820px, 90vw);
+            max-height: 86vh;
+            overflow: auto;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal img.lazy {
+            max-width: 100%;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto
+        }
+
+        /* carousel */
+        .reasons {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            overflow: hidden;
+            align-items: center
+        }
+
+        .reason {
+            min-width: 220px;
+            padding: 12px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005));
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        /* escape no-btn (absolute for moving) */
+        .no-wrap {
+            position: relative
+        }
+
+        .no-wrap .btn-no {
+            position: absolute;
+            right: 12px;
+            bottom: 12px
+        }
+
+        /* canvas full */
+        canvas#particles {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        @media (max-width:880px) {
+            .card {
+                grid-template-columns: 1fr;
+                padding: 18px
+            }
+
+            .right {
+                order: 2
+            }
+        }
+
+        /* reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+
+            .bg-overlay,
+            .card,
+            .modal,
+            .reasons,
+            .reason {
+                animation: none !important;
+                transition: none !important
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-overlay" aria-hidden="true"></div>
+    <canvas id="particles" width="1920" height="1080" aria-hidden="true"></canvas>
+
+    <div class="wrap">
+        <div class="card" role="main" aria-labelledby="mainQ">
+            <div class="left">
+                <h1 id="mainQ">Будешь ли ты моим валентином? 💙💚💫✨😍</h1>
+                <p class="lead">Скажи да — и я устрою салют из сердечек! Или попробуй нажать «Нет» — если осмелишься 😉
+                </p>
+
+                <div class="actions" aria-hidden="false">
+                    <button class="btn btn-yes" id="yesBtn" aria-haspopup="dialog" aria-controls="yesModal">Да —
+                        конечно! 💖</button>
+
+                    <div class="no-wrap" style="position:relative;">
+                        <button class="btn btn-no" id="noBtn" aria-haspopup="dialog" aria-controls="noModal">Нет...
+                            😬</button>
+                    </div>
+                </div>
+
+                <div class="mini" style="margin-top:16px">
+                    <strong>Короткие варианты подсказок:</strong>
+                    <ul style="padding-left:18px; margin:8px 0 0 0; font-size:13px">
+                        <li>Ты — моё нежное море 🌊💙</li>
+                        <li>Хочу держать твою руку сегодня и всегда 🤝</li>
+                        <li>Ты — мой любимый сюрприз 🎁</li>
+                    </ul>
+                </div>
+
+                <!-- space for additional interactive elements -->
+                <div id="extra" style="margin-top:14px"></div>
+            </div>
+
+            <aside class="right" aria-hidden="false">
+                <div class="mini">
+                    🎨 Design: Glassmorphism + deep blue / emerald.
+                </div>
+                <div class="mini">
+                    ✨ Tip: Replace GIF placeholders at top of script.
+                </div>
+                <div class="mini" id="status" aria-live="polite" style="min-height:32px"></div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- YES Modal -->
+    <div class="modal" id="yesModal" role="dialog" aria-modal="true" aria-labelledby="yesTitle">
+        <div class="dialog" id="yesDialog" tabindex="-1">
+            <h2 id="yesTitle">Ура! 🎉 Люблю тебя</h2>
+            <p>Смотри, что я подготовил:</p>
+            <!-- lazy gif -->
+            <img class="lazy" id="yesGif" alt="romantic gif" src="" data-src="YES_GIF_URL" aria-hidden="false">
+            <div class="reasons" id="reasonsList" style="margin-top:12px">
+                <!-- carousel items injected by JS -->
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn btn-no" id="closeYes">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NO Modal -->
+    <div class="modal" id="noModal" role="dialog" aria-modal="true" aria-labelledby="noTitle">
+        <div class="dialog" id="noDialog" tabindex="-1">
+            <h2 id="noTitle">Ох... 😅</h2>
+            <p>Эх, даже кнопки жалко — но вот тебе маленький мем!</p>
+            <img class="lazy" id="noGif" alt="funny judging gif" src="" data-src="NO_GIF_URL">
+            <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn btn-no" id="closeNo">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* short developer comments in English */
+
+        /* ========== Configuration ========== */
+        const YES_GIF_URL = 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif'; // placeholder
+        const NO_GIF_URL = 'https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif'; // placeholder
+
+        const PARTICLE_COUNT = 28; // background hearts
+        const CONFETTI_PARTICLES = 80; // burst size (reduce on mobile)
+        const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        /* ========== Canvas particles (floating hearts) ========== */
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        let W = window.innerWidth, H = window.innerHeight;
+        canvas.width = W; canvas.height = H;
+
+        class Heart {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * W;
+                this.y = Math.random() * H;
+                this.size = 8 + Math.random() * 22;
+                this.vx = (Math.random() - 0.5) * 0.3;
+                this.vy = -0.15 - Math.random() * 0.4;
+                this.alpha = 0.2 + Math.random() * 0.65;
+                this.angle = Math.random() * Math.PI * 2;
+                this.spin = (Math.random() - 0.5) * 0.02;
+                this.fill = Math.random() > 0.5 ? 'rgba(43,183,255,' + this.alpha + ')' : 'rgba(0,230,160,' + this.alpha + ')';
+            }
+            step() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+                if (this.y < -60 || this.x < -60 || this.x > W + 60) this.reset();
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.scale(this.size / 40, this.size / 40);
+                ctx.fillStyle = this.fill;
+                // simple heart path
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(0, -12, -20, -12, -20, 5);
+                ctx.bezierCurveTo(-20, 25, 0, 35, 0, 50);
+                ctx.bezierCurveTo(0, 35, 20, 25, 20, 5);
+                ctx.bezierCurveTo(20, -12, 0, -12, 0, 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        const hearts = [];
+        for (let i = 0; i < PARTICLE_COUNT; i++) hearts.push(new Heart());
+
+        function stepAll() {
+            if (REDUCE_MOTION) return;
+            ctx.clearRect(0, 0, W, H);
+            for (let h of hearts) {
+                h.step();
+                h.draw();
+            }
+            requestAnimationFrame(stepAll);
+        }
+        stepAll();
+
+        /* handle resize */
+        window.addEventListener('resize', () => {
+            W = window.innerWidth; H = window.innerHeight;
+            canvas.width = W; canvas.height = H;
+        });
+
+        /* ========== confetti burst (simple) ========== */
+        function spawnConfetti(x, y, count = CONFETTI_PARTICLES) {
+            // limit on mobile
+            const max = Math.min(count, window.innerWidth < 600 ? 40 : 140);
+            for (let i = 0; i < max; i++) {
+                // draw quick particle using setTimeout (simple)
+                const p = { x, y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 2.5) * 6, size: 4 + Math.random() * 8, life: 80 + Math.random() * 40, color: Math.random() > 0.6 ? '#ff6b9f' : (Math.random() > 0.5 ? '#ffcf66' : '#ff7b7b') };
+                animateParticle(p);
+            }
+        }
+
+        function animateParticle(p) {
+            const id = setInterval(() => {
+                p.vy += 0.28;
+                p.x += p.vx; p.y += p.vy; p.life--;
+                // render to overlay layer using small rect
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                if (p.life <= 0 || p.y > H + 80) {
+                    clearInterval(id);
+                }
+            }, 16);
+        }
+
+        /* ========== modal helpers & lazy loading gifs ========== */
+        function openModal(modalEl) {
+            modalEl.classList.add('open');
+            // focus trap basic
+            const dialog = modalEl.querySelector('.dialog');
+            dialog.focus();
+        }
+        function closeModal(modalEl) {
+            modalEl.classList.remove('open');
+        }
+
+        /* lazy-load gif */
+        function lazyLoadImg(imgEl) {
+            if (!imgEl) return;
+            if (imgEl.dataset.src && !imgEl.src) {
+                imgEl.src = imgEl.dataset.src;
+            }
+        }
+
+        /* ========== main interactions ========== */
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const yesModal = document.getElementById('yesModal');
+        const noModal = document.getElementById('noModal');
+        const yesGif = document.getElementById('yesGif');
+        const noGif = document.getElementById('noGif');
+
+        document.getElementById('closeYes').addEventListener('click', () => closeModal(yesModal));
+        document.getElementById('closeNo').addEventListener('click', () => closeModal(noModal));
+
+        yesBtn.addEventListener('click', (e) => {
+            // small scale animation
+            yesBtn.animate([{ transform: 'scale(1.0)' }, { transform: 'scale(1.05)' }, { transform: 'scale(1.0)' }], { duration: 420 });
+            // spawn hearts + confetti around center of card
+            const rect = yesBtn.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            // burst hearts
+            for (let i = 0; i < 10; i++) {
+                const h = new Heart();
+                h.x = cx + (Math.random() - 0.5) * 60;
+                h.y = cy + (Math.random() - 0.5) * 60;
+                h.vx = (Math.random() - 0.5) * 6;
+                h.vy = -6 - Math.random() * 3;
+                hearts.push(h);
+            }
+            // confetti
+            spawnConfetti(cx, cy, CONFETTI_PARTICLES);
+            // lazy-load & open modal with gif
+            yesGif.dataset.src = YES_GIF_URL;
+            lazyLoadImg(yesGif);
+            // populate reasons carousel
+            populateReasons();
+            setTimeout(() => openModal(yesModal), 300);
+        });
+
+        /* populate 10 reasons */
+        function populateReasons() {
+            const list = document.getElementById('reasonsList');
+            if (list.children.length) return;
+            const reasons = [
+                'Ты всегда заставляешь меня улыбаться 😊',
+                'Твой смех круче любой песни 🎶',
+                'Ты — моё лучшее решение',
+                'С тобой всё кажется возможным ✨',
+                'Ты поддерживаешь меня в трудные дни',
+                'Твои объятия — мой дом 🏡',
+                'Мы создаём лучшие истории вместе',
+                'Ты вдохновляешь меня быть лучше',
+                'С тобой уютно даже во время дождя ☔️',
+                'Я люблю тебя просто так — вот почему'
+            ];
+            for (let r of reasons) {
+                const el = document.createElement('div');
+                el.className = 'reason';
+                el.textContent = r;
+                list.appendChild(el);
+            }
+            // simple horizontal scroll to show them
+            list.scrollLeft = 0;
+        }
+
+        /* ========== 'No' button runaway logic ========== */
+        let noZone = document.querySelector('.card');
+        function moveNoButtonAway() {
+            // pick a random position inside the card
+            const parentRect = noZone.getBoundingClientRect();
+            const maxX = parentRect.width - 120;
+            const maxY = parentRect.height - 60;
+            const x = 12 + Math.random() * Math.max(1, maxX);
+            const y = 12 + Math.random() * Math.max(1, maxY);
+            noBtn.style.transform = `translate(${x}px, ${y}px)`;
+        }
+
+        /* avoid on mousemove near */
+        noZone.addEventListener('mousemove', (ev) => {
+            const b = noBtn.getBoundingClientRect();
+            const dx = ev.clientX - (b.left + b.width / 2);
+            const dy = ev.clientY - (b.top + b.height / 2);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 110) {
+                moveNoButtonAway();
+            }
+        });
+
+        /* keyboard focus fallback */
+        noBtn.addEventListener('focus', () => {
+            // for keyboard users: show aria message and allow Enter after 1s
+            const status = document.getElementById('status');
+            status.textContent = 'Ой, кнопка смутилась — попробуйте ещё раз (или нажмите Enter через секунду).';
+            setTimeout(() => { status.textContent = ''; }, 3000);
+        });
+
+        /* if clicked (rare) show judging gif */
+        noBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // set gif and open modal
+            noGif.dataset.src = NO_GIF_URL;
+            lazyLoadImg(noGif);
+            openModal(noModal);
+            // return button to original position after small delay
+            setTimeout(() => { noBtn.style.transform = ''; }, 800);
+        });
+
+        /* accessibility: close modals on esc and trap focus minimally */
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal(yesModal);
+                closeModal(noModal);
+            }
+            if (e.key === 'Tab') {
+                // basic focus trap when modal open
+                const open = document.querySelector('.modal.open');
+                if (open) {
+                    e.preventDefault();
+                    open.querySelector('.dialog').focus();
+                }
+            }
+        });
+
+        /* click outside dialog to close (simple) */
+        [yesModal, noModal].forEach(m => {
+            m.addEventListener('click', (ev) => {
+                if (ev.target === m) closeModal(m);
+            });
+        });
+
+        /* reduce heavy animation on mobile or reduced-motion */
+        if (window.innerWidth < 600 || REDUCE_MOTION) {
+            // lower particle density
+            while (hearts.length > 10) hearts.pop();
+        }
+
+        /* initial micro-animations */
+        setTimeout(() => { document.querySelector('.card').animate([{ transform: 'translateY(6px)' }, { transform: 'translateY(0)' }], { duration: 800, easing: 'ease-out' }) }, 600);
+
+        /* small performance note: clear old hearts every so often */
+        setInterval(() => {
+            if (hearts.length > 240) hearts.splice(0, 80);
+        }, 6500);
+
+        /* ========== End of script ========== */
+    </script>
+</body>
+
+</html>
