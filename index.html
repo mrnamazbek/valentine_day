@@ -451,6 +451,60 @@
             margin: 18px auto
         }
 
+        /* GIF fallback placeholder — animated pulsing heart */
+        .gif-fallback {
+            width: 100%;
+            max-width: 400px;
+            height: 220px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 18px auto;
+            background: linear-gradient(135deg, rgba(255, 107, 159, .12), rgba(0, 230, 160, .08));
+            border: 1px dashed rgba(255, 255, 255, .12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gif-fallback::before {
+            content: '💖';
+            font-size: 64px;
+            animation: fbPulse 1.8s ease-in-out infinite;
+        }
+
+        .gif-fallback::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 107, 159, .15), transparent 65%);
+            animation: fbGlow 2.4s ease-in-out infinite alternate;
+        }
+
+        @keyframes fbPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: .7
+            }
+
+            50% {
+                transform: scale(1.25);
+                opacity: 1
+            }
+        }
+
+        @keyframes fbGlow {
+            0% {
+                opacity: .3
+            }
+
+            100% {
+                opacity: .8
+            }
+        }
+
         /* ============================== YES REVEAL SEQUENCE ============================== */
         .reveal-overlay {
             position: fixed;
@@ -782,8 +836,23 @@
         /* ================================================================
            CONFIG
            ================================================================ */
-        const YES_GIF_URL = 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif';
-        const NO_GIF_URL = 'https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif';
+        /* GIF URLs with fallback cascades (verified working IDs) */
+        const YES_GIF_URLS = [
+            'https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif',
+            'https://media1.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif',
+            'https://media.giphy.com/media/M90mJvfWfd5mbUuULX/giphy.gif',
+            'https://media.giphy.com/media/xT0GqssRweIhlz209i/giphy.gif',
+            'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
+            'https://media1.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
+        ];
+        const NO_GIF_URLS = [
+            'https://media.giphy.com/media/3oEjHAUOqG3lSS0f1C/giphy.gif',
+            'https://media1.giphy.com/media/3oEjHAUOqG3lSS0f1C/giphy.gif',
+            'https://media.giphy.com/media/JfLdIahamXQI0/giphy.gif',
+            'https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif',
+            'https://media1.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif',
+            'https://media.giphy.com/media/xT0GqssRweIhlz209i/giphy.gif',
+        ];
         const PARTICLE_COUNT = 35;
         const CONFETTI_COUNT = 100;
         const REDUCED = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -1134,7 +1203,38 @@
 
         function openModal(m) { m.classList.add('open'); const d = m.querySelector('.modal-dialog'); if (d) d.focus(); document.body.style.overflow = 'hidden' }
         function closeModal(m) { m.classList.remove('open'); document.body.style.overflow = '' }
-        function lazyGif(img, url) { if (img && url && !img.src) img.src = url }
+        /* Cascading GIF loader: tries each URL, detects Giphy "not available" placeholder */
+        function loadGifWithFallback(img, urls) {
+            if (!img || !urls || !urls.length) return;
+            if (img.dataset.loaded === 'true') return;
+            let idx = 0;
+            function tryNext() {
+                if (idx >= urls.length) {
+                    // All URLs failed — show CSS animated fallback
+                    img.style.display = 'none';
+                    if (!img.parentNode.querySelector('.gif-fallback')) {
+                        const fb = document.createElement('div');
+                        fb.className = 'gif-fallback';
+                        fb.setAttribute('role', 'img');
+                        fb.setAttribute('aria-label', img.alt || 'Animated heart');
+                        img.parentNode.insertBefore(fb, img.nextSibling);
+                    }
+                    return;
+                }
+                img.onerror = () => { idx++; tryNext(); };
+                img.onload = () => {
+                    // Detect Giphy "THIS CONTENT IS NOT AVAILABLE" placeholder (480x270)
+                    if (img.naturalWidth === 480 && img.naturalHeight === 270) {
+                        idx++; tryNext(); return;
+                    }
+                    img.dataset.loaded = 'true';
+                    img.onerror = null;
+                    img.style.display = '';
+                };
+                img.src = urls[idx];
+            }
+            tryNext();
+        }
 
         document.getElementById('closeYesModal').addEventListener('click', () => closeModal(yesModal));
         document.getElementById('closeNoModal').addEventListener('click', () => closeModal(noModal));
@@ -1170,7 +1270,7 @@
                 statusCard.innerHTML = '<strong>📡 Status</strong> ❤️ PERFECT CONNECTION!';
                 liveRegion.textContent = 'Ответ: Да! Сердца летят!';
 
-                lazyGif(document.getElementById('yesGifImg'), YES_GIF_URL);
+                loadGifWithFallback(document.getElementById('yesGifImg'), YES_GIF_URLS);
                 populateReasons();
                 openModal(yesModal);
 
@@ -1231,7 +1331,7 @@
         });
         noBtn.addEventListener('click', e => {
             e.preventDefault();
-            lazyGif(document.getElementById('noGifImg'), NO_GIF_URL);
+            loadGifWithFallback(document.getElementById('noGifImg'), NO_GIF_URLS);
             openModal(noModal);
             setTimeout(() => {
                 noBtn.style = ''; noBtn.textContent = 'Нет... 😬'; noStep = 0;
